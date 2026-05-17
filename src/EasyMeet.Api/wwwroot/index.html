@@ -1,0 +1,57 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EasyMeet - Interface Web</title>
+  <style>
+    :root { --bg:#f4f7fb; --card:#ffffff; --txt:#1d2a3a; --primary:#0b6bcb; }
+    body { margin:0; font-family:Segoe UI, sans-serif; background:var(--bg); color:var(--txt); }
+    main { max-width:900px; margin:40px auto; background:var(--card); border-radius:12px; padding:24px; box-shadow:0 8px 24px rgba(0,0,0,.08); }
+    h1 { margin-top:0; }
+    textarea,input,button { width:100%; padding:10px; margin-top:8px; margin-bottom:14px; }
+    button { background:var(--primary); color:#fff; border:none; border-radius:8px; cursor:pointer; }
+    pre { background:#0f172a; color:#e2e8f0; padding:12px; overflow:auto; border-radius:8px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>EasyMeet</h1>
+    <p>Interface web simples para testar a API de resumo de reuniões.</p>
+    <label for="idioma">Idioma</label>
+    <input id="idioma" value="pt-BR" />
+    <label for="texto">Texto da reunião</label>
+    <textarea id="texto" rows="8" placeholder="Cole aqui a transcrição da reunião..."></textarea>
+    <button id="enviar">Resumir Reunião</button>
+    <h2>Resposta</h2>
+    <pre id="saida">Aguardando requisição...</pre>
+  </main>
+
+  <script>
+    const btn = document.getElementById('enviar');
+    const saida = document.getElementById('saida');
+
+    btn.addEventListener('click', async () => {
+      const payload = {
+        texto: document.getElementById('texto').value,
+        idioma: document.getElementById('idioma').value
+      };
+
+      saida.textContent = 'Processando...';
+
+      try {
+        const resp = await fetch('/api/reunioes/resumir', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await resp.json();
+        saida.textContent = JSON.stringify(data, null, 2);
+      } catch (e) {
+        saida.textContent = 'Falha ao chamar API: ' + e;
+      }
+    });
+  </script>
+</body>
+</html>
