@@ -34,7 +34,7 @@ Regras obrigatórias de construção de prompt:
 - incluir instruções para intervalo de confiança (`0.0` a `1.0`);
 - exigir arrays de string para listas (`topicosPrincipais`, `acoes`, `responsaveis`);
 - orientar classificação para um conjunto controlado de tipos de reunião;
-- informar idioma esperado da resposta quando aplicável;
+- fixar idioma de resposta em português (pt-BR) nesta versão;
 - incluir a transcrição integral sem alteração semântica;
 - reforçar política de não invenção (usar apenas evidências do texto).
 
@@ -100,7 +100,7 @@ No fallback, a API deve retornar:
 ### Entrada (request)
 - rejeitar texto vazio;
 - rejeitar texto muito curto (regra mínima configurada);
-- validar idioma informado.
+- validar texto informado.
 
 ### Saída da IA
 - validar formato JSON;
@@ -171,3 +171,4 @@ Uma resposta só é considerada válida quando:
 - mantém aderência factual ao texto;
 - apresenta consistência entre resumo, ações, responsáveis e tipo;
 - não viola regras de segurança e fallback.
+

@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using EasyMeet.Api.Models;
 
 namespace EasyMeet.Api.Prompts;
 
@@ -13,12 +12,10 @@ public sealed class PromptResumoReuniaoBuilder(ILogger<PromptResumoReuniaoBuilde
     /// <summary>
     /// Monta prompt estruturado para o modelo de IA.
     /// </summary>
-    public async Task<string> BuildAsync(string texto, string idioma, CancellationToken cancellationToken = default)
+    public async Task<string> BuildAsync(string texto, CancellationToken cancellationToken = default)
     {
         var promptTemplate = await LoadPromptTemplateAsync(cancellationToken);
-        return promptTemplate
-            .Replace("{{TRANSCRICAO}}", texto, StringComparison.Ordinal)
-            .Replace("{{IDIOMA}}", idioma, StringComparison.Ordinal);
+        return promptTemplate.Replace("{{TRANSCRICAO}}", texto, StringComparison.Ordinal);
     }
 
     private async Task<string> LoadPromptTemplateAsync(CancellationToken cancellationToken)
@@ -54,6 +51,6 @@ public sealed class PromptResumoReuniaoBuilder(ILogger<PromptResumoReuniaoBuilde
             nivelConfianca = 0.0
         });
 
-        return $"Retorne apenas JSON válido neste formato: {schema}. Idioma: {{IDIOMA}}. Transcrição: {{TRANSCRICAO}}";
+        return $"Retorne apenas JSON válido neste formato: {schema}. Idioma: pt-BR. Transcrição: {{TRANSCRICAO}}";
     }
 }

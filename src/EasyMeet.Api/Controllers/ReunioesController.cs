@@ -34,14 +34,9 @@ public sealed class ReunioesController(IAgenteResumoReuniaoService agenteResumoR
             return BadRequest(new { mensagem = $"O campo texto deve ter pelo menos {TextoMinimoCaracteres} caracteres." });
         }
 
-        if (string.IsNullOrWhiteSpace(request.Idioma))
-        {
-            return BadRequest(new { mensagem = "O campo idioma é obrigatório." });
-        }
-
         try
         {
-            var response = await agenteResumoReuniaoService.ResumirAsync(texto, request.Idioma.Trim(), cancellationToken);
+            var response = await agenteResumoReuniaoService.ResumirAsync(texto, cancellationToken);
             return Ok(response);
         }
         catch (Exception ex)

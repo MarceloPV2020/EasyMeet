@@ -34,7 +34,7 @@ A solução usa IA generativa (Gemini 2.5 Flash) e fallback local para garantir 
 
 ## 6. Funcionalidades
 - endpoint `POST /api/reunioes/resumir`;
-- validação de entrada (texto e idioma);
+- validação de entrada (texto);
 - geração de prompt estruturado;
 - integração com Gemini API via `HttpClient`;
 - validação e desserialização segura do retorno da IA;
@@ -53,7 +53,7 @@ A IA é componente funcional central do produto:
 Sem IA, a proposta principal de valor do EasyMeet fica limitada.
 
 ## 8. Requisitos funcionais
-- RF01: receber payload com `texto` e `idioma`.
+- RF01: receber payload com `texto`.
 - RF02: validar texto vazio.
 - RF03: validar texto muito curto.
 - RF04: processar texto com IA para gerar saída estruturada.
@@ -93,5 +93,6 @@ Sem IA, a proposta principal de valor do EasyMeet fica limitada.
 - dashboard com indicadores de reuniões;
 - métricas de qualidade da IA e taxa de fallback;
 - testes de integração end-to-end e contratos;
-- suporte avançado a múltiplos idiomas;
+- evoluir para suporte avançado a múltiplos idiomas;
 - melhoria de prompts e avaliação contínua de precisão.
+

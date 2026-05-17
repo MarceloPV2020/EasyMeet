@@ -12,7 +12,7 @@ public sealed class ReunioesControllerTests
     {
         // Arrange
         var controller = new ReunioesController(new FakeAgenteResumoReuniaoService());
-        var request = new ResumoReuniaoRequest { Texto = "   ", Idioma = "pt-BR" };
+        var request = new ResumoReuniaoRequest { Texto = "   " };
 
         // Act
         var result = await controller.ResumirAsync(request, CancellationToken.None);
@@ -26,7 +26,7 @@ public sealed class ReunioesControllerTests
     {
         // Arrange
         var controller = new ReunioesController(new FakeAgenteResumoReuniaoService());
-        var request = new ResumoReuniaoRequest { Texto = "curto", Idioma = "pt-BR" };
+        var request = new ResumoReuniaoRequest { Texto = "curto" };
 
         // Act
         var result = await controller.ResumirAsync(request, CancellationToken.None);
@@ -54,8 +54,7 @@ public sealed class ReunioesControllerTests
         var controller = new ReunioesController(new FakeAgenteResumoReuniaoService(expected));
         var request = new ResumoReuniaoRequest
         {
-            Texto = "Este texto possui tamanho suficiente para validação e execução do fluxo completo.",
-            Idioma = "pt-BR"
+            Texto = "Este texto possui tamanho suficiente para validação e execução do fluxo completo."
         };
 
         // Act
@@ -87,9 +86,10 @@ public sealed class ReunioesControllerTests
             };
         }
 
-        public Task<ResumoReuniaoResponse> ResumirAsync(string texto, string idioma, CancellationToken cancellationToken = default)
+        public Task<ResumoReuniaoResponse> ResumirAsync(string texto, CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_response);
         }
     }
 }
+

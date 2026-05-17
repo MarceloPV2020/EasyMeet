@@ -8,5 +8,5 @@ public interface IAgenteResumoReuniaoService
     /// <summary>
     /// Analisa o texto da reunião e retorna o resultado estruturado.
     /// </summary>
-    Task<Models.ResumoReuniaoResponse> ResumirAsync(string texto, string idioma, CancellationToken cancellationToken = default);
+    Task<Models.ResumoReuniaoResponse> ResumirAsync(string texto, CancellationToken cancellationToken = default);
 }

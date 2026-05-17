@@ -19,7 +19,8 @@ Regras obrigatórias:
 5) Se faltar contexto, preencha com melhor inferência possível, mantendo consistência e concisão.
 6) Resumo deve ser claro e curto (máximo 6 linhas).
 
-Idioma esperado para a resposta: {{IDIOMA}}
+Idioma esperado para a resposta: pt-BR
 
 Transcrição da reunião:
 {{TRANSCRICAO}}
+

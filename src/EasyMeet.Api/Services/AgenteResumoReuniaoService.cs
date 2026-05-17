@@ -12,9 +12,9 @@ public sealed class AgenteResumoReuniaoService(
     ILogger<AgenteResumoReuniaoService> logger) : IAgenteResumoReuniaoService
 {
     /// <inheritdoc />
-    public async Task<ResumoReuniaoResponse> ResumirAsync(string texto, string idioma, CancellationToken cancellationToken = default)
+    public async Task<ResumoReuniaoResponse> ResumirAsync(string texto, CancellationToken cancellationToken = default)
     {
-        var prompt = await promptBuilder.BuildAsync(texto, idioma, cancellationToken);
+        var prompt = await promptBuilder.BuildAsync(texto, cancellationToken);
         var iaResult = await geminiClientService.TryGerarResumoAsync(prompt, cancellationToken);
 
         if (iaResult is not null)

@@ -170,8 +170,7 @@ Crie o endpoint POST /api/reunioes/resumir.
 Entrada:
 
 {
-  "texto": "",
-  "idioma": "pt-BR"
+  "texto": ""
 }
 
 Saída:

@@ -65,7 +65,7 @@ EasyMeet/
 ```
 
 ## Fluxo da aplicação
-1. Cliente envia `POST /api/reunioes/resumir` com `texto` e `idioma`.
+1. Cliente envia `POST /api/reunioes/resumir` com `texto`.
 2. Controller valida entrada.
 3. Serviço monta prompt estruturado.
 4. Serviço chama Gemini 2.5 Flash.
@@ -110,8 +110,7 @@ dotnet test .\tests\EasyMeet.Tests\EasyMeet.Tests.csproj
 ## Exemplo de request
 ```json
 {
-  "texto": "Na reunião de status, o time revisou o andamento das entregas...",
-  "idioma": "pt-BR"
+  "texto": "Na reunião de status, o time revisou o andamento das entregas..."
 }
 ```
 
@@ -154,3 +153,4 @@ dotnet test .\tests\EasyMeet.Tests\EasyMeet.Tests.csproj
 - [ADR](docs/ADR.md)
 - [Diretrizes de IA](docs/DIRETRIZES_IA.md)
 - [Prompts](docs/prompts.md)
+

@@ -27,7 +27,7 @@ public sealed class AgenteResumoReuniaoServiceTests
             """));
 
         // Act
-        var result = await service.ResumirAsync("Texto da reunião com conteúdo suficiente para análise de IA.", "pt-BR", CancellationToken.None);
+        var result = await service.ResumirAsync("Texto da reunião com conteúdo suficiente para análise de IA.", CancellationToken.None);
 
         // Assert
         Assert.Equal("Resumo final da reunião de planejamento.", result.Resumo);
@@ -51,7 +51,7 @@ public sealed class AgenteResumoReuniaoServiceTests
             """));
 
         // Act
-        var result = await service.ResumirAsync("Texto de reunião válido com detalhamento de tarefas.", "pt-BR", CancellationToken.None);
+        var result = await service.ResumirAsync("Texto de reunião válido com detalhamento de tarefas.", CancellationToken.None);
 
         // Assert
         Assert.Contains("Definir OKRs", result.Acoes);
@@ -74,7 +74,7 @@ public sealed class AgenteResumoReuniaoServiceTests
             """));
 
         // Act
-        var result = await service.ResumirAsync("Texto de reunião válido para identificar responsáveis.", "pt-BR", CancellationToken.None);
+        var result = await service.ResumirAsync("Texto de reunião válido para identificar responsáveis.", CancellationToken.None);
 
         // Assert
         Assert.Contains("Marina", result.Responsaveis);
@@ -97,7 +97,7 @@ public sealed class AgenteResumoReuniaoServiceTests
             """));
 
         // Act
-        var result = await service.ResumirAsync("Texto de reunião válido para identificar tópicos.", "pt-BR", CancellationToken.None);
+        var result = await service.ResumirAsync("Texto de reunião válido para identificar tópicos.", CancellationToken.None);
 
         // Assert
         Assert.Contains("Riscos", result.TopicosPrincipais);
@@ -112,7 +112,7 @@ public sealed class AgenteResumoReuniaoServiceTests
         var service = CreateServiceWithGeminiPayload("{" + "\"erro\":true}", HttpStatusCode.InternalServerError);
 
         // Act
-        var result = await service.ResumirAsync("Texto de reunião válido para fallback local em caso de erro.", "pt-BR", CancellationToken.None);
+        var result = await service.ResumirAsync("Texto de reunião válido para fallback local em caso de erro.", CancellationToken.None);
 
         // Assert
         Assert.False(result.GeradoPorIA);
@@ -209,3 +209,4 @@ public sealed class AgenteResumoReuniaoServiceTests
         public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 }
+
