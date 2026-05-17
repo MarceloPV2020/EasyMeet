@@ -394,3 +394,46 @@ Depois informe:
   - dotnet build
   - dotnet test
   - dotnet run
+
+## 13. Submissão ao Repositório Git com Pull Request
+### Prompt
+Prepare a submissão final do projeto EasyMeet para GitHub.
+
+Objetivo:
+Submeter todas as alterações atuais em uma branch feature/easymeet-ia e preparar um Pull Request completo.
+
+Execute as seguintes etapas:
+
+1. Verifique alterações pendentes.
+2. Verifique a branch atual.
+3. Caso necessário, troque/crie a branch:
+   feature/easymeet-ia
+
+4. Adicione todos os arquivos:
+   git add .
+
+5. Faça commit utilizando:
+   feat: implementa easymeet com assistente inteligente de reunioes
+
+6. Faça push para:
+   origin feature/easymeet-ia
+
+7. Verifique se existe:
+   .github/workflows/dotnet-ci.yml
+
+8. Verifique se existe:
+   PR.md
+
+9. Verifique se os testes executam:
+   dotnet build EasyMeet.sln
+   dotnet test EasyMeet.sln
+
+10. Gere instruções finais para:
+    - abrir Pull Request;
+    - validar GitHub Actions;
+    - confirmar execução automática dos testes.
+
+11. Utilizar o conteúdo do arquivo PR.md como descrição do Pull Request.
+
+Não faça merge automaticamente.
+O Pull Request deve permanecer OPEN.
