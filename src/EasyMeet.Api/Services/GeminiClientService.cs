@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Headers;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using EasyMeet.Api.Models;
@@ -25,8 +25,9 @@ public sealed class GeminiClientService(HttpClient httpClient, ILogger<GeminiCli
         var apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            logger.LogWarning("GEMINI_API_KEY não configurada. IA real desativada.");
-            return null;
+            const string msg = "GEMINI_API_KEY não configurada. IA real desativada.";
+            logger.LogWarning(msg);
+            throw new InvalidOperationException(msg);
         }
 
         using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -40,29 +41,33 @@ public sealed class GeminiClientService(HttpClient httpClient, ILogger<GeminiCli
 
             if (!response.IsSuccessStatusCode)
             {
-                logger.LogWarning("Gemini retornou status {StatusCode}. Body: {Body}", (int)response.StatusCode, responseContent);
-                return null;
+                var msg = $"Gemini retornou status {(int)response.StatusCode}. Body: {responseContent}";
+                logger.LogWarning(msg);
+                throw new InvalidOperationException(msg);
             }
 
             var candidateText = ExtractCandidateText(responseContent);
             if (string.IsNullOrWhiteSpace(candidateText))
             {
-                logger.LogWarning("Gemini não retornou conteúdo textual utilizável.");
-                return null;
+                const string msg = "Gemini não retornou conteúdo textual utilizável.";
+                logger.LogWarning(msg);
+                throw new InvalidOperationException(msg);
             }
 
             var cleanedJson = TryExtractJsonObject(candidateText);
             if (string.IsNullOrWhiteSpace(cleanedJson))
             {
-                logger.LogWarning("Não foi possível extrair JSON válido da resposta do Gemini.");
-                return null;
+                const string msg = "Não foi possível extrair JSON válido da resposta do Gemini.";
+                logger.LogWarning(msg);
+                throw new InvalidOperationException(msg);
             }
 
             var parsed = DeserializeAndValidate(cleanedJson);
             if (parsed is null)
             {
-                logger.LogWarning("JSON do Gemini inválido ou fora do schema esperado.");
-                return null;
+                const string msg = "JSON do Gemini inválido ou fora do schema esperado.";
+                logger.LogWarning(msg);
+                throw new InvalidOperationException(msg);
             }
 
             logger.LogInformation("Resposta válida recebida do Gemini.");
@@ -70,13 +75,14 @@ public sealed class GeminiClientService(HttpClient httpClient, ILogger<GeminiCli
         }
         catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
         {
-            logger.LogWarning("Timeout ao chamar Gemini após {TimeoutSeconds}s.", RequestTimeout.TotalSeconds);
-            return null;
+            var msg = $"Timeout ao chamar Gemini após {RequestTimeout.TotalSeconds}s.";
+            logger.LogWarning(msg);
+            throw new TimeoutException(msg);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not InvalidOperationException && ex is not TimeoutException)
         {
             logger.LogError(ex, "Falha inesperada ao chamar Gemini.");
-            return null;
+            throw;
         }
     }
 

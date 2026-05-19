@@ -1,52 +1,123 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>EasyMeet - Interface Web</title>
   <style>
-    :root { --bg:#f4f7fb; --card:#ffffff; --txt:#1d2a3a; --primary:#0b6bcb; }
+    :root { --bg:#f4f7fb; --card:#ffffff; --txt:#1d2a3a; --primary:#0b6bcb; --error:#dc2626; }
     body { margin:0; font-family:Segoe UI, sans-serif; background:var(--bg); color:var(--txt); }
-    main { max-width:900px; margin:40px auto; background:var(--card); border-radius:12px; padding:24px; box-shadow:0 8px 24px rgba(0,0,0,.08); }
+    main { max-width:900px; margin:40px auto; background:var(--card); border-radius:12px; padding:24px; box-shadow:0 8px 24px rgba(0,0,0,.08); position: relative; }
     h1 { margin-top:0; }
-    textarea,button { width:100%; padding:10px; margin-top:8px; margin-bottom:14px; }
-    button { background:var(--primary); color:#fff; border:none; border-radius:8px; cursor:pointer; }
-    pre { background:#0f172a; color:#e2e8f0; padding:12px; overflow:auto; border-radius:8px; }
+    textarea,button { width:100%; padding:10px; box-sizing: border-box; margin-top:8px; margin-bottom:14px; }
+    button { background:var(--primary); color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight: bold; }
+    button:disabled { background: #94a3b8; cursor: not-allowed; }
+    pre { background:#0f172a; color:#e2e8f0; padding:12px; overflow:auto; border-radius:8px; white-space: pre-wrap; word-wrap: break-word; min-height: 50px; }
+    
+    /* Toast/Dialog estilo */
+    #toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--error);
+      color: white;
+      padding: 16px 32px;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      z-index: 9999; /* Garantir que fique acima de tudo */
+      display: none;
+      animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      max-width: 90%;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    @keyframes slideDown {
+      from { transform: translate(-50%, -100%); opacity: 0; }
+      to { transform: translate(-50%, 0); opacity: 1; }
+    }
   </style>
 </head>
 <body>
+  <div id="toast">Erro ao processar requisição</div>
+
   <main>
     <h1>EasyMeet</h1>
-    <p>Interface web simples para testar a API de resumo de reuniões (sempre em português).</p>
+    <p>Interface web para resumo de reuniões via IA.</p>
+    
     <label for="texto">Texto da reunião</label>
     <textarea id="texto" rows="8" placeholder="Cole aqui a transcrição da reunião..."></textarea>
+    
     <button id="enviar">Resumir Reunião</button>
-    <h2>Resposta</h2>
+    
+    <h2>Resumo</h2>
     <pre id="saida">Aguardando requisição...</pre>
   </main>
 
   <script>
     const btn = document.getElementById('enviar');
     const saida = document.getElementById('saida');
+    const toast = document.getElementById('toast');
+    const input = document.getElementById('texto');
+
+    let toastTimeout;
+
+    function showError(msg) {
+      console.error('Erro detectado:', msg);
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.style.display = 'none';
+      }, 8000); // Aumentado para 8 segundos para dar tempo de ler
+    }
 
     btn.addEventListener('click', async () => {
-      const payload = {
-        texto: document.getElementById('texto').value
-      };
+      const texto = input.value.trim();
+      if (!texto) {
+        showError('Por favor, insira o texto da reunião.');
+        return;
+      }
 
       saida.textContent = 'Processando...';
+      btn.disabled = true;
+      toast.style.display = 'none';
 
       try {
         const resp = await fetch('/api/reunioes/resumir', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify({ texto })
         });
 
-        const data = await resp.json();
-        saida.textContent = JSON.stringify(data, null, 2);
+        if (resp.ok) {
+          const resumo = await resp.text();
+          saida.textContent = resumo;
+        } else {
+          saida.textContent = ''; // Limpa o campo resposta em caso de erro
+          
+          let errorMsg = 'Erro desconhecido ao processar resumo.';
+          try {
+            const errorData = await resp.json();
+            errorMsg = errorData.mensagem || errorData.detail || errorMsg;
+          } catch (jsonErr) {
+            // Se não for JSON, tenta pegar como texto
+            try {
+              const textErr = await resp.text();
+              if (textErr) errorMsg = textErr;
+            } catch (textErr) {}
+          }
+          
+          showError(errorMsg);
+        }
       } catch (e) {
-        saida.textContent = 'Falha ao chamar API: ' + e;
+        console.error('Exceção capturada:', e);
+        showError('Falha na comunicação com o servidor: ' + e.message);
+        saida.textContent = '';
+      } finally {
+        btn.disabled = false;
       }
     });
   </script>

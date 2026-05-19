@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using EasyMeet.Api.Models;
 using EasyMeet.Api.Prompts;
 using EasyMeet.Api.Services;
@@ -30,94 +30,18 @@ public sealed class AgenteResumoReuniaoServiceTests
         var result = await service.ResumirAsync("Texto da reunião com conteúdo suficiente para análise de IA.", CancellationToken.None);
 
         // Assert
-        Assert.Equal("Resumo final da reunião de planejamento.", result.Resumo);
-        Assert.True(result.GeradoPorIA);
-        Assert.Equal("gemini", result.ModoExecucao);
+        Assert.Equal("Resumo final da reunião de planejamento.", result);
     }
 
     [Fact]
-    public async Task ResumirAsync_DeveIdentificarAcoes_QuandoGeminiRetornaAcoes()
-    {
-        // Arrange
-        var service = CreateServiceWithGeminiPayload(BuildGeminiEnvelope("""
-            {
-              "resumo": "Resumo",
-              "topicosPrincipais": ["Tema"],
-              "acoes": ["Definir OKRs", "Enviar ata"],
-              "responsaveis": ["João"],
-              "tipoReuniao": "Status",
-              "nivelConfianca": 0.87
-            }
-            """));
-
-        // Act
-        var result = await service.ResumirAsync("Texto de reunião válido com detalhamento de tarefas.", CancellationToken.None);
-
-        // Assert
-        Assert.Contains("Definir OKRs", result.Acoes);
-        Assert.Contains("Enviar ata", result.Acoes);
-    }
-
-    [Fact]
-    public async Task ResumirAsync_DeveIdentificarResponsaveis_QuandoGeminiRetornaResponsaveis()
-    {
-        // Arrange
-        var service = CreateServiceWithGeminiPayload(BuildGeminiEnvelope("""
-            {
-              "resumo": "Resumo",
-              "topicosPrincipais": ["Tema"],
-              "acoes": ["A"],
-              "responsaveis": ["Marina", "Pedro"],
-              "tipoReuniao": "Status",
-              "nivelConfianca": 0.9
-            }
-            """));
-
-        // Act
-        var result = await service.ResumirAsync("Texto de reunião válido para identificar responsáveis.", CancellationToken.None);
-
-        // Assert
-        Assert.Contains("Marina", result.Responsaveis);
-        Assert.Contains("Pedro", result.Responsaveis);
-    }
-
-    [Fact]
-    public async Task ResumirAsync_DeveIdentificarTopicosPrincipais_QuandoGeminiRetornaTopicos()
-    {
-        // Arrange
-        var service = CreateServiceWithGeminiPayload(BuildGeminiEnvelope("""
-            {
-              "resumo": "Resumo",
-              "topicosPrincipais": ["Riscos", "Orçamento", "Prazos"],
-              "acoes": ["A"],
-              "responsaveis": ["R"],
-              "tipoReuniao": "Executive",
-              "nivelConfianca": 0.88
-            }
-            """));
-
-        // Act
-        var result = await service.ResumirAsync("Texto de reunião válido para identificar tópicos.", CancellationToken.None);
-
-        // Assert
-        Assert.Contains("Riscos", result.TopicosPrincipais);
-        Assert.Contains("Orçamento", result.TopicosPrincipais);
-        Assert.Contains("Prazos", result.TopicosPrincipais);
-    }
-
-    [Fact]
-    public async Task ResumirAsync_DeveUsarFallbackLocal_QuandoGeminiFalhar()
+    public async Task ResumirAsync_DeveLancarExcecao_QuandoGeminiFalhar()
     {
         // Arrange
         var service = CreateServiceWithGeminiPayload("{" + "\"erro\":true}", HttpStatusCode.InternalServerError);
 
-        // Act
-        var result = await service.ResumirAsync("Texto de reunião válido para fallback local em caso de erro.", CancellationToken.None);
-
-        // Assert
-        Assert.False(result.GeradoPorIA);
-        Assert.Equal("fallback_local", result.ModoExecucao);
-        Assert.StartsWith("Resumo local (fallback):", result.Resumo);
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(() => 
+            service.ResumirAsync("Texto de reunião válido para testar erro do Gemini.", CancellationToken.None));
     }
 
     [Fact]
@@ -156,6 +80,21 @@ public sealed class AgenteResumoReuniaoServiceTests
         Assert.Contains("gemini-2.5-flash:generateContent", handler.LastRequest.RequestUri!.ToString(), StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task GeminiClientService_DeveLancarExcecao_QuandoApiKeyNaoConfigurada()
+    {
+        // Arrange
+        var client = new HttpClient();
+        var geminiClientService = new GeminiClientService(client, NullLogger<GeminiClientService>.Instance);
+        Environment.SetEnvironmentVariable("GEMINI_API_KEY", "");
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => 
+            geminiClientService.TryGerarResumoAsync("Prompt de teste", CancellationToken.None));
+        
+        Assert.Contains("GEMINI_API_KEY não configurada", ex.Message);
+    }
+
     private static AgenteResumoReuniaoService CreateServiceWithGeminiPayload(string payload, HttpStatusCode statusCode = HttpStatusCode.OK)
     {
         Environment.SetEnvironmentVariable("GEMINI_API_KEY", "fake-key");
@@ -176,8 +115,7 @@ public sealed class AgenteResumoReuniaoServiceTests
 
         return new AgenteResumoReuniaoService(
             promptBuilder,
-            geminiClientService,
-            NullLogger<AgenteResumoReuniaoService>.Instance);
+            geminiClientService);
     }
 
     private static string BuildGeminiEnvelope(string innerJson)
@@ -209,4 +147,3 @@ public sealed class AgenteResumoReuniaoServiceTests
         public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 }
-

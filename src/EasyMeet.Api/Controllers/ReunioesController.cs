@@ -1,4 +1,4 @@
-﻿using EasyMeet.Api.Models;
+using EasyMeet.Api.Models;
 using EasyMeet.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,10 +14,10 @@ public sealed class ReunioesController(IAgenteResumoReuniaoService agenteResumoR
     private const int TextoMinimoCaracteres = 20;
 
     /// <summary>
-    /// Recebe o texto de uma reunião e retorna resumo estruturado gerado por IA.
+    /// Recebe o texto de uma reunião e retorna resumo em texto gerado por IA.
     /// </summary>
     [HttpPost("resumir")]
-    [ProducesResponseType(typeof(ResumoReuniaoResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ResumirAsync([FromBody] ResumoReuniaoRequest request, CancellationToken cancellationToken)
@@ -38,6 +38,14 @@ public sealed class ReunioesController(IAgenteResumoReuniaoService agenteResumoR
         {
             var response = await agenteResumoReuniaoService.ResumirAsync(texto, cancellationToken);
             return Ok(response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
+        catch (TimeoutException ex)
+        {
+            return StatusCode(StatusCodes.Status504GatewayTimeout, new { mensagem = ex.Message });
         }
         catch (Exception ex)
         {

@@ -1,4 +1,4 @@
-﻿using EasyMeet.Api.Controllers;
+using EasyMeet.Api.Controllers;
 using EasyMeet.Api.Models;
 using EasyMeet.Api.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -39,18 +39,7 @@ public sealed class ReunioesControllerTests
     public async Task ResumirAsync_DeveRetornarOk_QuandoEntradaValida()
     {
         // Arrange
-        var expected = new ResumoReuniaoResponse
-        {
-            Resumo = "Resumo de teste",
-            TopicosPrincipais = ["Topico A"],
-            Acoes = ["Acao A"],
-            Responsaveis = ["Pessoa A"],
-            TipoReuniao = "Status",
-            NivelConfianca = 0.91,
-            GeradoPorIA = true,
-            ModoExecucao = "gemini"
-        };
-
+        const string expected = "Resumo de teste";
         var controller = new ReunioesController(new FakeAgenteResumoReuniaoService(expected));
         var request = new ResumoReuniaoRequest
         {
@@ -62,34 +51,41 @@ public sealed class ReunioesControllerTests
 
         // Assert
         var ok = Assert.IsType<OkObjectResult>(result);
-        var payload = Assert.IsType<ResumoReuniaoResponse>(ok.Value);
-        Assert.Equal("Resumo de teste", payload.Resumo);
-        Assert.Equal("gemini", payload.ModoExecucao);
+        var payload = Assert.IsType<string>(ok.Value);
+        Assert.Equal(expected, payload);
     }
 
-    private sealed class FakeAgenteResumoReuniaoService : IAgenteResumoReuniaoService
+    [Fact]
+    public async Task ResumirAsync_DeveRetornarBadRequest_QuandoServiceLancaInvalidOperation()
     {
-        private readonly ResumoReuniaoResponse _response;
-
-        public FakeAgenteResumoReuniaoService(ResumoReuniaoResponse? response = null)
+        // Arrange
+        var controller = new ReunioesController(new ExceptionAgenteResumoReuniaoService(new InvalidOperationException("Erro simulado")));
+        var request = new ResumoReuniaoRequest
         {
-            _response = response ?? new ResumoReuniaoResponse
-            {
-                Resumo = "Resumo fake",
-                TopicosPrincipais = ["Topico"],
-                Acoes = ["Acao"],
-                Responsaveis = ["Responsavel"],
-                TipoReuniao = "Status",
-                NivelConfianca = 0.8,
-                GeradoPorIA = true,
-                ModoExecucao = "gemini"
-            };
+            Texto = "Este texto possui tamanho suficiente para validação e execução do fluxo completo."
+        };
+
+        // Act
+        var result = await controller.ResumirAsync(request, CancellationToken.None);
+
+        // Assert
+        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.NotNull(badRequest.Value);
+    }
+
+    private sealed class FakeAgenteResumoReuniaoService(string response = "Resumo fake") : IAgenteResumoReuniaoService
+    {
+        public Task<string> ResumirAsync(string texto, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(response);
         }
+    }
 
-        public Task<ResumoReuniaoResponse> ResumirAsync(string texto, CancellationToken cancellationToken = default)
+    private sealed class ExceptionAgenteResumoReuniaoService(Exception ex) : IAgenteResumoReuniaoService
+    {
+        public Task<string> ResumirAsync(string texto, CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(_response);
+            throw ex;
         }
     }
 }
-
