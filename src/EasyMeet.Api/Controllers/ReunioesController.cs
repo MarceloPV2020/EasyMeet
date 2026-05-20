@@ -14,10 +14,10 @@ public sealed class ReunioesController(IAgenteResumoReuniaoService agenteResumoR
     private const int TextoMinimoCaracteres = 20;
 
     /// <summary>
-    /// Recebe o texto de uma reunião e retorna resumo em texto gerado por IA.
+    /// Recebe o texto de uma reunião e retorna resumo estruturado gerado por IA.
     /// </summary>
     [HttpPost("resumir")]
-    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ResumoReuniaoResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ResumirAsync([FromBody] ResumoReuniaoRequest request, CancellationToken cancellationToken)

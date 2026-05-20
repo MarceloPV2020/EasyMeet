@@ -2,13 +2,17 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using EasyMeet.Api.Models;
+using Microsoft.Extensions.Options;
 
 namespace EasyMeet.Api.Services;
 
 /// <summary>
 /// Cliente responsável por comunicação com Google Gemini.
 /// </summary>
-public sealed class GeminiClientService(HttpClient httpClient, ILogger<GeminiClientService> logger)
+public sealed class GeminiClientService(
+    HttpClient httpClient, 
+    IOptions<GeminiSettings> geminiOptions,
+    ILogger<GeminiClientService> logger)
 {
     private const string ModelName = "gemini-2.5-flash";
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(25);
@@ -22,10 +26,10 @@ public sealed class GeminiClientService(HttpClient httpClient, ILogger<GeminiCli
     /// </summary>
     public async Task<ResumoReuniaoIaOutput?> TryGerarResumoAsync(string prompt, CancellationToken cancellationToken = default)
     {
-        var apiKey = Environment.GetEnvironmentVariable("GEMINI_API_KEY");
+        var apiKey = geminiOptions.Value.ApiKey;
         if (string.IsNullOrWhiteSpace(apiKey))
         {
-            const string msg = "GEMINI_API_KEY não configurada. IA real desativada.";
+            const string msg = "GEMINI_API_KEY não configurada no appsettings.json. IA real desativada.";
             logger.LogWarning(msg);
             throw new InvalidOperationException(msg);
         }
