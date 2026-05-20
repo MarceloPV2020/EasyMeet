@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Options;
 
 namespace EasyMeet.Api.Providers;
 
+[ExcludeFromCodeCoverage]
 public sealed class GeminiClientService(
     HttpClient httpClient,
     IOptions<GeminiSettings> geminiSettings,

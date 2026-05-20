@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Globalization;
+using System.Text.Json;
 using EasyMeet.Api.Models;
 
 namespace EasyMeet.Api.Services;
@@ -129,7 +130,7 @@ public sealed class MeetingAnalysisParser
             return Math.Clamp(number, 0d, 1d);
         }
 
-        if (node.ValueKind == JsonValueKind.String && double.TryParse(node.GetString(), out var parsed))
+        if (node.ValueKind == JsonValueKind.String && double.TryParse(node.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed))
         {
             return Math.Clamp(parsed, 0d, 1d);
         }
@@ -198,4 +199,5 @@ public sealed class MeetingAnalysisParser
         };
     }
 }
+
 

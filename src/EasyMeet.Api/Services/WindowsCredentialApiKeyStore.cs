@@ -1,9 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
 using EasyMeet.Api.Models;
 
 namespace EasyMeet.Api.Services;
 
+[ExcludeFromCodeCoverage]
 public sealed class WindowsCredentialApiKeyStore : IApiKeyStore
 {
     private const uint CredTypeGeneric = 1;
