@@ -171,6 +171,25 @@
     .panel-body { padding: 16px; display: grid; gap: 12px; }
     .row { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
     .row.single { grid-template-columns: 1fr; }
+    .row.analysis-top { grid-template-columns: 1fr auto; align-items: end; }
+    .advanced-config {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fbfe;
+      padding: 10px 12px;
+    }
+    .advanced-config summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: #334155;
+      user-select: none;
+    }
+    .summary-status {
+      font-weight: 800;
+    }
+    .summary-status.info { color: #1d4ed8; }
+    .summary-status.ok { color: var(--ok); }
+    .summary-status.bad { color: var(--bad); }
 
     label {
       font-size: 12px;
@@ -424,27 +443,14 @@
           <p>Selecione o provedor e gere o resumo estruturado com a IA configurada.</p>
         </div>
         <div class="panel-body">
-          <div class="row">
-            <div>
-              <label for="providerAnalysis">Provedor para análise</label>
-              <select id="providerAnalysis"></select>
+          <details class="advanced-config">
+            <summary id="analysisConfigSummary">Configuração da análise (IA atual: não definida)</summary>
+            <div class="row analysis-top" style="margin-top:10px;">
+              <div>
+                <label for="providerAnalysis">Provedor para análise</label>
+                <select id="providerAnalysis"></select>
+              </div>
             </div>
-            <div>
-              <label>Execucao</label>
-              <span id="analysisState" class="chip info">Pronto</span>
-            </div>
-          </div>
-          <div class="row single">
-            <button id="switchToGroq" type="button" class="alt" style="display:none;">Quota do Gemini excedida: usar Groq agora</button>
-          </div>
-
-          <div>
-            <label for="transcricao">Transcrição</label>
-            <textarea id="transcricao" placeholder="Cole aqui a transcrição completa da reunião..."></textarea>
-          </div>
-
-          <details>
-            <summary>Configurações avançadas de IA</summary>
             <div class="row" style="margin-top:10px;">
               <div>
                 <label for="modeloIa">Modelo (opcional)</label>
@@ -474,6 +480,15 @@
               <div><button id="clearDefaultsIa" type="button" class="alt">Restaurar padrão</button></div>
             </div>
           </details>
+
+          <div class="row single">
+            <button id="switchToGroq" type="button" class="alt" style="display:none;">Quota do Gemini excedida: usar Groq agora</button>
+          </div>
+
+          <div>
+            <label for="transcricao">Transcrição</label>
+            <textarea id="transcricao" placeholder="Cole aqui a transcrição completa da reunião..."></textarea>
+          </div>
 
           <button id="analisar">Analisar reunião</button>
 
@@ -527,7 +542,6 @@
     const providerAnalysisEl = document.getElementById("providerAnalysis");
     const providerStatusEl = document.getElementById("providerStatus");
     const apiKeyEl = document.getElementById("apiKey");
-    const analysisStateEl = document.getElementById("analysisState");
     const transcricaoEl = document.getElementById("transcricao");
     const switchToGroqBtn = document.getElementById("switchToGroq");
     const modeloIaEl = document.getElementById("modeloIa");
@@ -535,6 +549,7 @@
     const maxTokensIaEl = document.getElementById("maxTokensIa");
     const saveDefaultsIaBtn = document.getElementById("saveDefaultsIa");
     const clearDefaultsIaBtn = document.getElementById("clearDefaultsIa");
+    const analysisConfigSummaryEl = document.getElementById("analysisConfigSummary");
 
     const resumoEl = document.getElementById("resumo");
     const topicosEl = document.getElementById("topicos");
@@ -612,6 +627,7 @@
     let providerStatus = {};
     let toastTimeout;
     let historicoCarregado = false;
+    let analysisStatus = { text: "Pronto", className: "chip info" };
 
     function syncDrawerState(open) {
       configDrawerEl.classList.toggle("open", open);
@@ -828,6 +844,24 @@
       }
     }
 
+    function getSummaryStatusClass() {
+      if (analysisStatus.className.includes("ok")) return "ok";
+      if (analysisStatus.className.includes("bad")) return "bad";
+      return "info";
+    }
+
+    function updateAnalysisConfigSummary() {
+      const provider = toApiProvider(providerAnalysisEl.value) || "não definida";
+      const status = (analysisStatus.text || "Pronto").trim();
+      const statusClass = getSummaryStatusClass();
+      analysisConfigSummaryEl.innerHTML = `Configuração da análise (IA atual: ${provider} | status: <span class="summary-status ${statusClass}">${status}</span>)`;
+    }
+
+    function setAnalysisState(text, chipClass) {
+      analysisStatus = { text, className: chipClass };
+      updateAnalysisConfigSummary();
+    }
+
     function updateMaxTokensPlaceholderForProvider() {
       const provider = toApiProvider(providerAnalysisEl.value);
       const sugerido = maxTokensSugeridoPorProvedor[provider] ?? 1024;
@@ -869,6 +903,7 @@
       updateModeloOptionsForProvider();
       updateTemperaturaDefaultLabelForProvider();
       updateMaxTokensPlaceholderForProvider();
+      updateAnalysisConfigSummary();
       setAdvancedConfigFields(store[provider] || null);
     }
 
@@ -1099,8 +1134,7 @@
       }
 
       analisarBtn.disabled = true;
-      analysisStateEl.textContent = "Processando";
-      analysisStateEl.className = "chip info";
+      setAnalysisState("Processando", "chip info");
       resumoEl.textContent = "Processando...";
       resumoEl.className = "value";
 
@@ -1138,16 +1172,14 @@
         tipoReuniaoEl.className = "value";
         confiancaEl.textContent = formatConfianca(result.nivelConfianca);
         confiancaEl.className = "value";
-        analysisStateEl.textContent = "Concluido";
-        analysisStateEl.className = "chip ok";
+        setAnalysisState("Concluído", "chip ok");
         historicoCarregado = false;
         if (!historicoViewEl.hidden) {
           await fetchHistorico(false);
         }
       } catch (err) {
         resetAnalysisOutput();
-        analysisStateEl.textContent = "Erro";
-        analysisStateEl.className = "chip bad";
+        setAnalysisState("Erro", "chip bad");
         const detalhe = (err?.message || "").toString().trim();
         const amigavel = mapFriendlyErrorMessage(detalhe || "Erro inesperado na análise.");
         const mensagemFinal = detalhe && amigavel !== detalhe
@@ -1210,7 +1242,7 @@
       await fetchProviders();
       await fetchStatus();
       applyDefaultsForCurrentProvider();
-      analysisStateEl.className = "chip info";
+      setAnalysisState("Pronto", "chip info");
     }
 
     bootstrap().catch(err => showToast(err.message || "Falha na inicialização.", true));
