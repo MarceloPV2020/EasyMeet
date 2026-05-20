@@ -437,3 +437,28 @@ Execute as seguintes etapas:
 
 Não faça merge automaticamente.
 O Pull Request deve permanecer OPEN.
+
+## 14. Requisito: Cobertura Mínima de Testes - 30%
+### Prompt
+Atualize as políticas de contribuição para exigir cobertura mínima de testes automatizados de 30% antes de aprovação e merge de Pull Requests.
+
+## Obrigatoriedade
+Todo Pull Request deve atender a uma cobertura mínima de **30%** de testes automatizados antes de ser aprovado e mesclado.
+
+## O que é considerado
+- Testes unitários (xUnit, NUnit, MSTest, etc.)
+- Testes de integração
+- Testes que validem o comportamento da funcionalidade
+- Linhas de código executadas durante a execução dos testes
+
+## O que não é considerado
+- Código comentado
+- Métodos que apenas delegam responsabilidades sem lógica
+- Arquivos de configuração
+
+## Validação
+A cobertura será verificada através do relatório `coverage.opencover.xml` gerado pela execução dos testes:
+
+```powershell
+dotnet test --collect:"XPlat Code Coverage"
+```
