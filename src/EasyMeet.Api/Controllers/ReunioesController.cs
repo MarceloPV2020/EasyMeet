@@ -22,21 +22,25 @@ public sealed class ReunioesController(IAgenteResumoReuniaoService agenteResumoR
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> ResumirAsync([FromBody] ResumoReuniaoRequest request, CancellationToken cancellationToken)
     {
-        var texto = request.Texto?.Trim() ?? string.Empty;
+        var texto = request.Transcricao?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(texto))
         {
-            return BadRequest(new { mensagem = "O campo texto e obrigatorio e nao pode ser vazio." });
+            return BadRequest(new { mensagem = "O campo transcricao e obrigatorio e nao pode ser vazio." });
         }
 
         if (texto.Length < TextoMinimoCaracteres)
         {
-            return BadRequest(new { mensagem = $"O campo texto deve ter pelo menos {TextoMinimoCaracteres} caracteres." });
+            return BadRequest(new { mensagem = $"O campo transcricao deve ter pelo menos {TextoMinimoCaracteres} caracteres." });
         }
 
         try
         {
-            var response = await agenteResumoReuniaoService.ResumirAsync(texto, cancellationToken);
+            var response = await agenteResumoReuniaoService.ResumirAsync(
+                texto,
+                request.ProvedorIA,
+                request.ConfiguracaoIA,
+                cancellationToken);
             return Ok(response);
         }
         catch (InvalidOperationException ex)

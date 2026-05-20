@@ -1,98 +1,80 @@
-﻿# PRD - EasyMeet
+# PRD - EasyMeet
 
-## 1. Visão geral
-EasyMeet é uma API REST para transformar transcrições de reuniões em informações estruturadas, apoiando acompanhamento de decisões, responsabilidades e próximos passos.
+## Visão geral
+O EasyMeet é uma aplicação local para Windows voltada à análise inteligente de reuniões. A solução permite configurar múltiplos provedores de IA, armazenar credenciais com segurança e gerar uma resposta estruturada a partir de uma transcrição.
 
-## 2. Objetivo do produto
-Entregar uma solução de análise inteligente de reuniões que reduza esforço manual na documentação e aumente a clareza sobre ações e responsáveis.
+## Objetivo
+Entregar uma experiência profissional para análise de reuniões com:
+- seleção de provedor de IA em tempo de execução;
+- gerenciamento seguro de API keys;
+- análise real com IA, sem fallback local;
+- visualização clara de resumo, tópicos, ações, responsáveis, decisões, pendências, tipo de reunião e confiança;
+- configuração avançada de modelo, temperatura e máximo de tokens.
 
-## 3. Problema
-Times realizam muitas reuniões e perdem tempo consolidando:
-- resumo do que foi discutido;
-- ações definidas;
-- responsáveis por execução;
-- contexto para acompanhamento.
+## Público-alvo
+- equipes administrativas e corporativas;
+- profissionais que registram atas, ações e decisões;
+- instrutores, coordenadores e gestores que precisam transformar transcrições em informação operacional.
 
-Esse processo manual é lento, inconsistente e propenso a erros.
+## Funcionalidades implementadas
+- Configuração de provedores em menu lateral recolhível.
+- Cadastro, substituição, remoção e teste de API key por provedor.
+- Status visual de credencial configurada ou não configurada.
+- Seleção de provedor para análise.
+- Persistência local do último provedor utilizado.
+- Configurações avançadas por provedor.
+- Defaults avançados salvos no navegador por provedor.
+- Mensagens de erro amigáveis com detalhe técnico.
+- Atalho para trocar para Groq quando a quota do Gemini for excedida.
 
-## 4. Público-alvo
-- equipes de desenvolvimento de software;
-- líderes técnicos e gerentes de projeto;
-- squads ágeis com rituais frequentes;
-- contextos acadêmicos e laboratoriais de IA aplicada.
+## Provedores suportados
+- Gemini
+- Groq
+- OpenAI
+- Anthropic
+- Mistral
+- Cohere
+- AzureOpenAI
 
-## 5. Solução proposta
-API que recebe texto/transcrição e retorna JSON estruturado com:
-- resumo;
-- tópicos principais;
-- ações;
-- responsáveis;
-- tipo de reunião;
-- nível de confiança da análise.
+## Requisitos funcionais
+- RF01: o usuário deve selecionar o provedor de IA para análise.
+- RF02: o usuário deve salvar, substituir, testar e remover API keys por provedor.
+- RF03: a aplicação deve bloquear a análise quando não houver chave configurada para o provedor selecionado.
+- RF04: a aplicação deve enviar ao endpoint de análise somente transcrição, provedor e configurações de IA, sem API key.
+- RF05: a aplicação deve retornar resposta estruturada em campos separados.
+- RF06: o usuário deve poder configurar modelo, temperatura e máximo de tokens.
+- RF07: a aplicação deve executar a análise no modelo selecionado ou no padrão do provedor.
+- RF08: a aplicação deve apresentar erros de forma amigável sem ocultar detalhes técnicos úteis.
 
-A solução usa IA generativa (Gemini 2.5 Flash) e fallback local para garantir continuidade.
+## Requisitos não funcionais
+- RNF01: API keys devem ser armazenadas no Windows Credential Manager.
+- RNF02: API keys não devem aparecer em logs, arquivos de configuração ou respostas HTTP.
+- RNF03: a arquitetura deve permitir inclusão de novos provedores sem alterar o fluxo principal.
+- RNF04: a API deve usar `async/await` e `CancellationToken`.
+- RNF05: a interface deve ser responsiva, clara e adequada ao uso recorrente.
+- RNF06: a aplicação deve ser validável com `dotnet build EasyMeet.sln` e `dotnet test EasyMeet.sln`.
 
-## 6. Funcionalidades
-- endpoint `POST /api/reunioes/resumir`;
-- validação de entrada (texto);
-- geração de prompt estruturado;
-- integração com Gemini API via `HttpClient`;
-- validação e desserialização segura do retorno da IA;
-- fallback local automático em falhas;
-- documentação Swagger;
-- testes automatizados xUnit.
+## APIs principais
+- `GET /api/ia/provedores`
+- `GET /api/ia/credenciais/status`
+- `POST /api/ia/credenciais`
+- `DELETE /api/ia/credenciais/{provedor}`
+- `POST /api/ia/credenciais/testar`
+- `POST /api/reunioes/resumir`
 
-## 7. Papel da IA
-A IA é componente funcional central do produto:
-- sintetiza conteúdo de reunião;
-- identifica itens acionáveis;
-- identifica possíveis responsáveis;
-- classifica o tipo de reunião;
-- estima confiança da análise.
+## Fluxo de análise
+1. O usuário seleciona um provedor.
+2. O usuário informa ou mantém as configurações avançadas.
+3. O usuário envia a transcrição para análise.
+4. O backend busca a chave salva no Windows Credential Manager.
+5. O backend seleciona o provider via `IAProviderFactory`.
+6. O provider chama a IA real usando o modelo/configuração definida.
+7. O parser valida e normaliza a resposta JSON.
+8. A interface exibe cada informação em seu campo.
 
-Sem IA, a proposta principal de valor do EasyMeet fica limitada.
-
-## 8. Requisitos funcionais
-- RF01: receber payload com `texto`.
-- RF02: validar texto vazio.
-- RF03: validar texto muito curto.
-- RF04: processar texto com IA para gerar saída estruturada.
-- RF05: retornar campos obrigatórios no formato definido.
-- RF06: indicar se a saída veio de IA real (`geradoPorIA = true`) ou fallback.
-- RF07: retornar `modoExecucao` (`gemini` ou `fallback_local`).
-- RF08: manter endpoint assíncrono com `CancellationToken`.
-- RF09: expor documentação do endpoint via Swagger.
-
-## 9. Requisitos não funcionais
-- RNF01: desempenho adequado para requisições síncronas de API.
-- RNF02: resiliência a falhas externas (timeout, erro HTTP, JSON inválido).
-- RNF03: disponibilidade com fallback local.
-- RNF04: código organizado, legível e com separação de responsabilidades.
-- RNF05: segurança básica de segredos (uso de variável de ambiente).
-- RNF06: testabilidade com mocks/fakes sem dependência de rede.
-
-## 10. Regras de negócio
-- RN01: texto deve conter conteúdo mínimo para análise.
-- RN02: resposta deve respeitar contrato JSON obrigatório.
-- RN03: `nivelConfianca` deve ficar entre `0.0` e `1.0`.
-- RN04: quando IA falhar, fallback local deve ser aplicado automaticamente.
-- RN05: não inventar informações sem evidência no texto.
-- RN06: quando não houver evidência para classificação, usar `Unknown`.
-
-## 11. Limitações
-- qualidade depende da clareza da transcrição recebida;
-- fallback local possui inteligência limitada;
-- não há persistência de histórico nesta versão;
-- não há autenticação/autorização implementada;
-- classificação pode perder nuances em textos muito curtos ou ambíguos.
-
-## 12. Roadmap futuro
-- persistência de análises em banco de dados;
-- autenticação e controle de acesso;
-- upload de áudio com transcrição automática;
-- dashboard com indicadores de reuniões;
-- métricas de qualidade da IA e taxa de fallback;
-- testes de integração end-to-end e contratos;
-- evoluir para suporte avançado a múltiplos idiomas;
-- melhoria de prompts e avaliação contínua de precisão.
-
+## Fora de escopo atual
+- Transcrição automática de áudio.
+- Login multiusuário.
+- Armazenamento histórico de reuniões.
+- Fallback local para análise.
+- Roteamento automático entre provedores.

@@ -1,118 +1,141 @@
-using System.Net;
 using EasyMeet.Api.Models;
 using EasyMeet.Api.Prompts;
 using EasyMeet.Api.Services;
-using EasyMeet.Tests.Fakes;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 
 namespace EasyMeet.Tests.Unit;
 
 public sealed class AgenteResumoReuniaoServiceTests
 {
     [Fact]
-    public async Task ResumirAsync_DeveGerarResumoCorreto_QuandoGeminiRetornaJsonValido()
+    public async Task ResumirAsync_DeveBloquear_QuandoNaoExisteChave()
     {
-        var service = CreateServiceWithGeminiPayload(BuildGeminiEnvelope("""
-            {
-              "resumo": "Resumo final da reuniao de planejamento.",
-              "topicosPrincipais": ["Backlog", "Dependencias"],
-              "acoes": ["Priorizar historias", "Atualizar cronograma"],
-              "responsaveis": ["Ana", "Carlos"],
-              "tipoReuniao": "Planning",
-              "nivelConfianca": 0.93
-            }
-            """));
+        var service = CreateService(
+            new InMemoryApiKeyStore(),
+            new[] { new FakeProvider(ProvedorIA.Gemini, "{}") });
 
-        var result = await service.ResumirAsync("Texto da reuniao com conteudo suficiente para analise de IA.", CancellationToken.None);
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.ResumirAsync("Transcricao valida para teste da regra.", ProvedorIA.Gemini, cancellationToken: CancellationToken.None));
 
-        Assert.Equal("Resumo final da reuniao de planejamento.", result.Resumo);
-        Assert.Contains("Backlog", result.TopicosPrincipais);
+        Assert.Contains("Chave de API nao configurada", ex.Message);
     }
 
     [Fact]
-    public async Task ResumirAsync_DeveLancarExcecao_QuandoGeminiFalhar()
+    public async Task ResumirAsync_DeveSelecionarProviderCorreto()
     {
-        var service = CreateServiceWithGeminiPayload("{" + "\"erro\":true}", HttpStatusCode.InternalServerError);
+        var store = new InMemoryApiKeyStore();
+        await store.SaveApiKeyAsync(ProvedorIA.Groq, "groq-key", CancellationToken.None);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            service.ResumirAsync("Texto de reuniao valido para testar erro do Gemini.", CancellationToken.None));
+        var groqPayload = """
+        {
+          "resumo":"Resumo via Groq",
+          "topicosPrincipais":["Topico"],
+          "acoes":[{"descricao":"Acao","responsavel":"Ana","prazo":"2026-06-01"}],
+          "responsaveis":["Ana"],
+          "decisoesTomadas":["Decisao"],
+          "pendencias":["Pendencia"],
+          "tipoReuniao":"Status",
+          "nivelConfianca":0.9
+        }
+        """;
+
+        var provider = new FakeProvider(ProvedorIA.Groq, groqPayload);
+        var service = CreateService(store, [provider]);
+
+        var result = await service.ResumirAsync("Transcricao valida para roteamento.", ProvedorIA.Groq, cancellationToken: CancellationToken.None);
+
+        Assert.Equal("Resumo via Groq", result.Resumo);
+        Assert.Equal(1, provider.Chamadas);
+        Assert.Equal("Groq", result.ModoExecucao);
     }
 
     [Fact]
-    public async Task GeminiClientService_DeveMontarRequisicaoCorretaEProcessarResposta()
+    public async Task ResumirAsync_DeveMapearRespostaEstruturada()
     {
-        var handler = new FakeHttpMessageHandler((_, _) =>
-            FakeHttpMessageHandler.JsonResponse(BuildGeminiEnvelope("""
-            {
-              "resumo": "Resumo teste integracao",
-              "topicosPrincipais": ["Topico 1"],
-              "acoes": ["Acao 1"],
-              "responsaveis": ["Resp 1"],
-              "tipoReuniao": "Daily",
-              "nivelConfianca": 0.81
-            }
-            """)));
+        var store = new InMemoryApiKeyStore();
+        await store.SaveApiKeyAsync(ProvedorIA.Gemini, "gemini-key", CancellationToken.None);
 
-        var client = new HttpClient(handler)
+        var payload = """
         {
-            BaseAddress = new Uri("https://generativelanguage.googleapis.com/")
-        };
+          "resumo":"Resumo final",
+          "topicosPrincipais":["Planejamento"],
+          "acoes":[{"descricao":"Atualizar backlog","responsavel":"Carlos","prazo":"2026-06-10"}],
+          "responsaveis":["Carlos"],
+          "decisoesTomadas":["Prioridade alta para sprint"],
+          "pendencias":["Definir prazo final"],
+          "tipoReuniao":"Planning",
+          "nivelConfianca":0.88
+        }
+        """;
 
-        var options = Options.Create(new GeminiSettings { ApiKey = "fake-key" });
-        var geminiClientService = new GeminiClientService(client, options, NullLogger<GeminiClientService>.Instance);
+        var service = CreateService(store, [new FakeProvider(ProvedorIA.Gemini, payload)]);
+        var result = await service.ResumirAsync("Transcricao completa de reuniao.", ProvedorIA.Gemini, cancellationToken: CancellationToken.None);
 
-        var result = await geminiClientService.TryGerarResumoAsync("Prompt de teste", CancellationToken.None);
-
-        Assert.NotNull(result);
-        Assert.Equal("Resumo teste integracao", result.Resumo);
-        Assert.NotNull(handler.LastRequest);
-        Assert.Equal(HttpMethod.Post, handler.LastRequest!.Method);
-        Assert.Contains("gemini-2.5-flash:generateContent", handler.LastRequest.RequestUri!.ToString(), StringComparison.Ordinal);
+        Assert.Equal("Resumo final", result.Resumo);
+        Assert.Single(result.Decisoes);
+        Assert.Single(result.Pendencias);
     }
 
-    private static AgenteResumoReuniaoService CreateServiceWithGeminiPayload(string payload, HttpStatusCode statusCode = HttpStatusCode.OK)
+    private static AgenteResumoReuniaoService CreateService(IApiKeyStore keyStore, IEnumerable<IGenerativeAIClient> providers)
     {
-        var handler = new FakeHttpMessageHandler((_, _) => FakeHttpMessageHandler.JsonResponse(payload, statusCode));
-        var client = new HttpClient(handler)
-        {
-            BaseAddress = new Uri("https://generativelanguage.googleapis.com/")
-        };
-
-        var options = Options.Create(new GeminiSettings { ApiKey = "fake-key" });
-        var geminiClientService = new GeminiClientService(client, options, NullLogger<GeminiClientService>.Instance);
-
         var environment = new FakeWebHostEnvironment
         {
             ContentRootPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../src/EasyMeet.Api"))
         };
 
-        var promptBuilder = new PromptResumoReuniaoBuilder(NullLogger<PromptResumoReuniaoBuilder>.Instance, environment);
-
         return new AgenteResumoReuniaoService(
-            promptBuilder,
-            geminiClientService);
+            new PromptResumoReuniaoBuilder(NullLogger<PromptResumoReuniaoBuilder>.Instance, environment),
+            keyStore,
+            new AIProviderFactory(providers),
+            new MeetingAnalysisParser());
     }
 
-    private static string BuildGeminiEnvelope(string innerJson)
+    private sealed class FakeProvider(ProvedorIA provedor, string retorno) : IGenerativeAIClient
     {
-        return $$"""
+        public ProvedorIA Provedor => provedor;
+        public int Chamadas { get; private set; }
+
+        public Task<string> GerarConteudoAsync(
+            string prompt,
+            string apiKey,
+            ConfiguracaoAnaliseIA? configuracaoIA,
+            CancellationToken cancellationToken)
         {
-          "candidates": [
-            {
-              "content": {
-                "parts": [
-                  {
-                    "text": {{System.Text.Json.JsonSerializer.Serialize(innerJson)}}
-                  }
-                ]
-              }
-            }
-          ]
+            Chamadas++;
+            return Task.FromResult(retorno);
         }
-        """;
+
+        public Task<bool> TestarConexaoAsync(string apiKey, CancellationToken cancellationToken) => Task.FromResult(true);
+    }
+
+    private sealed class InMemoryApiKeyStore : IApiKeyStore
+    {
+        private readonly Dictionary<ProvedorIA, string> _keys = new();
+
+        public Task SaveApiKeyAsync(ProvedorIA provedor, string apiKey, CancellationToken cancellationToken)
+        {
+            _keys[provedor] = apiKey;
+            return Task.CompletedTask;
+        }
+
+        public Task<string?> GetApiKeyAsync(ProvedorIA provedor, CancellationToken cancellationToken)
+        {
+            _keys.TryGetValue(provedor, out var value);
+            return Task.FromResult<string?>(value);
+        }
+
+        public Task DeleteApiKeyAsync(ProvedorIA provedor, CancellationToken cancellationToken)
+        {
+            _keys.Remove(provedor);
+            return Task.CompletedTask;
+        }
+
+        public Task<bool> HasApiKeyAsync(ProvedorIA provedor, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(_keys.ContainsKey(provedor));
+        }
     }
 
     private sealed class FakeWebHostEnvironment : IWebHostEnvironment

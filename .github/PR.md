@@ -1,74 +1,49 @@
-﻿# Pull Request — EasyMeet
+# Resumo
 
-## Resumo
-
-Este Pull Request implementa melhorias e ajustes na aplicação EasyMeet, assistente inteligente para análise automática de reuniões utilizando IA.
-
-As principais alterações incluem:
-- simplificação da API;
-- remoção da necessidade de informar idioma manualmente;
-- melhorias no fluxo de análise de reuniões;
-- ajustes na interface web;
-- atualização de testes e documentação.
-
----
-
-# Contexto
-
-Inicialmente a API exigia que o usuário informasse:
-- transcrição;
-- idioma.
-
-Após revisão funcional, o campo de idioma foi removido para simplificar a experiência do usuário, deixando o fluxo mais intuitivo e alinhado ao objetivo da aplicação.
-
-Agora o usuário precisa apenas informar o texto/transcrição da reunião.
-
----
+Refatora o EasyMeet para uma arquitetura multi-provedor de IA, com credenciais seguras por provedor, seleção dinâmica em tempo de execução, configurações avançadas de inferência e documentação técnica atualizada.
 
 # Tipo de alteração
-
 - [x] Funcionalidade
-- [x] Refatoração
+- [x] Correção
 - [x] Testes
 - [x] Documentação
-
----
+- [x] Refatoração
+- [x] Segurança
 
 # O que foi implementado
-
-## Backend/API
-- Remoção do campo `idioma` do request.
-- Simplificação do modelo `ResumoReuniaoRequest`.
-- Ajustes no endpoint `POST /api/reunioes/resumir`.
-- Ajustes nas validações da API.
-
-## IA
-- Atualização do prompt do agente IA.
-- Ajuste do fluxo Gemini.
-- Melhorias no processamento da transcrição.
-
-## Front-end
-- Atualização da interface web.
-- Remoção do campo de idioma da tela.
-- Melhorias de usabilidade.
-
-## Testes
-- Atualização dos testes automatizados.
-- Ajustes de compatibilidade após remoção do idioma.
-
-## Documentação
-- Atualização de README.
-- Atualização dos exemplos de request/response.
-- Ajustes em PRD e documentação técnica.
-
----
+- Suporte a Gemini, Groq, OpenAI, Anthropic, Mistral, Cohere e AzureOpenAI.
+- Organização dos providers em `src/EasyMeet.Api/Providers`.
+- `ProvedorIA`, `IGenerativeAIClient`, `IAProviderFactory` e clients concretos por provedor.
+- Armazenamento de API keys no Windows Credential Manager via `WindowsCredentialApiKeyStore`.
+- Endpoints `/api/ia/*` para listar provedores, salvar, testar, remover e consultar credenciais.
+- Análise de reunião sem envio de API key no request.
+- Configurações avançadas por análise: modelo, temperatura e máximo de tokens.
+- UI com menu lateral de configuração, defaults por provedor e mensagens amigáveis com detalhe técnico.
+- Prompt e parser atualizados para resposta estruturada em JSON válido.
+- Documentação profissional em português: ADR, Backlog, Diretrizes de IA, PRD, Viabilidade, UML e prompts.
+- Testes automatizados para fluxo multi-provedor, credenciais e análise.
 
 # Como testar
-
-## Pré-requisitos
-
-- .NET 9 SDK instalado
-- Chave Gemini configurada:
-
 ```powershell
-$env:GEMINI_API_KEY="SUA_CHAVE"
+dotnet build EasyMeet.sln
+dotnet test EasyMeet.sln
+dotnet run --project .\src\EasyMeet.Api\EasyMeet.Api.csproj
+```
+
+# Evidências
+- `dotnet test EasyMeet.sln`: 11 testes aprovados, 0 falhas.
+
+# Checklist
+- [x] Sem persistência de API key em arquivos locais
+- [x] Sem retorno de API key em endpoints
+- [x] Windows Credential Manager usado para credenciais
+- [x] Multi-provedor registrado por DI
+- [x] Providers organizados em pasta própria
+- [x] Interface web atualizada
+- [x] Documentação atualizada
+- [x] Testes automatizados atualizados
+- [x] Swagger/API preservados
+
+# Observações
+- OpenAI, Anthropic e AzureOpenAI dependem de chaves, billing, quota e permissões externas.
+- AzureOpenAI também depende de endpoint, deployment e API version configurados corretamente.

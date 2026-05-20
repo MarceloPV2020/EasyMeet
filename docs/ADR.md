@@ -1,37 +1,57 @@
-﻿# ADR - EasyMeet
+# ADR - Registros de Decisão de Arquitetura
 
-## ADR-001: Provedor de IA (Gemini 2.5 Flash)
-Problema: escolher um modelo para análise textual de reuniões com boa latência.
-Decisão: usar Google Gemini 2.5 Flash via API HTTP.
-Justificativa: equilíbrio entre custo, velocidade e capacidade de extração estruturada.
-Consequências: dependência externa mitigada por fallback local.
+Este documento registra as principais decisões arquiteturais do EasyMeet e o motivo de cada escolha.
 
-## ADR-002: Fallback local obrigatório
-Problema: garantir resposta mesmo com falha da IA externa.
-Decisão: implementar resposta local padronizada quando a integração falhar.
-Justificativa: manter disponibilidade e contrato da API.
-Consequências: qualidade semântica inferior no fallback, porém maior robustez.
+## ADR-001 - Arquitetura com múltiplos provedores de IA
+- Status: Aceita
+- Decisão: adotar a interface `IGenerativeAIClient` como contrato único para provedores de IA.
+- Decisão: usar `IAProviderFactory` / `AIProviderFactory` para resolver o cliente correto a partir de `ProvedorIA`.
+- Contexto: a aplicação precisa permitir seleção dinâmica de IA em tempo de execução sem alterar o fluxo central de análise de reuniões.
+- Consequências: novos provedores podem ser adicionados com classes isoladas, registro em DI e configuração própria.
+- Consequências: o serviço de análise permanece estável mesmo com APIs externas diferentes.
 
-## ADR-003: Plataforma ASP.NET Core .NET 9
-Problema: definir stack backend para API acadêmica com alta produtividade.
-Decisão: ASP.NET Core Web API em .NET 9.
-Justificativa: ecossistema maduro, DI nativa, Swagger e suporte a testes.
-Consequências: projeto alinhado a práticas modernas de desenvolvimento C#.
+## ADR-002 - Armazenamento seguro de credenciais no Windows
+- Status: Aceita
+- Decisão: armazenar API keys no Windows Credential Manager por meio de `IApiKeyStore` e `WindowsCredentialApiKeyStore`.
+- Decisão: usar o padrão de chave `EasyMeet:{ProvedorIA}`.
+- Contexto: o EasyMeet é uma aplicação local Windows e não deve persistir segredos em arquivos do projeto.
+- Consequências: API keys não ficam em `appsettings.json`, `launchSettings.json`, arquivos locais, logs ou repositório.
+- Consequências: cada provedor possui ciclo de vida próprio para salvar, substituir, consultar e remover credenciais.
 
-## ADR-004: Separação em Controllers/Services/Models/Prompts
-Problema: evitar acoplamento e facilitar manutenção.
-Decisão: separar entrada HTTP, regra de negócio, contratos e prompt engineering.
-Justificativa: arquitetura limpa e legível para evolução incremental.
-Consequências: melhor testabilidade e organização acadêmica.
+## ADR-003 - Seleção de provedor em tempo de execução
+- Status: Aceita
+- Decisão: incluir `provedorIA` no contrato de análise (`ResumoReuniaoRequest`).
+- Decisão: permitir seleção de provedor na interface web para configuração e análise.
+- Contexto: o usuário precisa comparar provedores, alternar em caso de quota/erro e escolher o melhor custo-benefício.
+- Consequências: a mesma transcrição pode ser analisada por provedores diferentes.
+- Consequências: UI e API precisam manter estado explícito do provedor selecionado.
 
-## ADR-005: Prompt engineering com contrato JSON estrito
-Problema: reduzir respostas inválidas e alucinações.
-Decisão: prompt com schema explícito e instrução de retorno somente em JSON.
-Justificativa: aumenta previsibilidade da saída do modelo.
-Consequências: exige validação robusta pós-resposta.
+## ADR-004 - Ausência de fallback local
+- Status: Aceita
+- Decisão: uma análise válida depende sempre de chamada real a um provedor de IA.
+- Contexto: o produto é uma plataforma de análise inteligente e não deve produzir resultados simulados.
+- Consequências: ausência de chave, chave inválida ou falha do provedor bloqueiam a análise.
+- Consequências: erros devem ser comunicados de forma clara ao usuário.
 
-## ADR-006: Testes automatizados com fakes/mocks
-Problema: validar comportamento sem depender da API real do Gemini.
-Decisão: usar xUnit + fakes de HttpMessageHandler e serviços.
-Justificativa: testes rápidos, determinísticos e sem custo externo.
-Consequências: complementação futura com testes de integração real controlados.
+## ADR-005 - Execução estrita no modelo selecionado
+- Status: Aceita
+- Decisão: executar a análise sempre no modelo selecionado pelo usuário ou no modelo padrão do provedor quando nenhum modelo for informado.
+- Decisão: não trocar automaticamente para outro modelo em caso de erro.
+- Contexto: o usuário pediu previsibilidade e controle explícito do modelo utilizado.
+- Consequências: falhas ficam mais transparentes e fáceis de diagnosticar.
+- Consequências: a aplicação evita resultados gerados por um modelo diferente daquele escolhido.
+
+## ADR-006 - Mensagens amigáveis com diagnóstico técnico preservado
+- Status: Aceita
+- Decisão: mapear erros comuns para mensagens compreensíveis na interface.
+- Decisão: preservar o detalhe técnico original do provedor quando disponível.
+- Contexto: usuários não técnicos precisam de orientação objetiva, enquanto suporte/desenvolvimento precisam do erro real.
+- Consequências: erros de quota, rate limit, chave expirada, modelo inválido e indisponibilidade ficam mais acionáveis.
+
+## ADR-007 - Configurações avançadas por análise
+- Status: Aceita
+- Decisão: permitir que o usuário informe `modelo`, `temperatura` e `maxTokens` por análise.
+- Decisão: permitir salvar preferências padrão por provedor no armazenamento local do navegador.
+- Contexto: cada provedor possui modelos e limites diferentes; o usuário precisa ajustar custo, qualidade e tamanho da resposta.
+- Consequências: a UI precisa exibir opções compatíveis por provedor.
+- Consequências: o backend aplica limites seguros antes de chamar cada API externa.

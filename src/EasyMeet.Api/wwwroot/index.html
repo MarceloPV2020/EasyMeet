@@ -1,305 +1,993 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>EasyMeet - Analise de Reunioes</title>
+  <title>EasyMeet - Multi-IA</title>
   <style>
     :root {
-      --page: #f3f6f8;
+      --bg: #eef3f7;
       --surface: #ffffff;
-      --surface-soft: #f7fafc;
+      --line: #d9e3ee;
       --ink: #17212f;
-      --muted: #607086;
-      --line: #d8e1ea;
+      --muted: #5f7289;
       --brand: #0f766e;
-      --brand-hover: #0b5f59;
-      --blue: #2563eb;
-      --amber: #b7791f;
-      --rose: #be123c;
-      --success-soft: #e8f6f3;
-      --blue-soft: #edf4ff;
-      --amber-soft: #fff7e8;
-      --rose-soft: #fff1f3;
+      --brand-dark: #0b5f59;
+      --warn: #a16207;
+      --ok: #166534;
+      --bad: #b91c1c;
       --shadow: 0 14px 34px rgba(23, 33, 47, 0.10);
     }
+
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      min-height: 100vh;
+      background: radial-gradient(circle at top left, #f5fbff, var(--bg) 50%);
       color: var(--ink);
       font-family: "Segoe UI", "Trebuchet MS", sans-serif;
-      background:
-        linear-gradient(135deg, rgba(15, 118, 110, 0.08), transparent 36%),
-        linear-gradient(315deg, rgba(183, 121, 31, 0.08), transparent 30%),
-        var(--page);
+    }
+    .shell {
+      max-width: 1650px;
+      margin: 0 auto;
+      padding: 18px 20px 24px;
     }
     .topbar {
-      border-bottom: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.88);
-      backdrop-filter: blur(10px);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
     }
-    .topbar-inner {
-      max-width: 1600px;
-      margin: 0 auto;
-      padding: 18px 22px;
+    h1 { margin: 0; font-size: 24px; }
+    .sub { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
+    .status {
+      border: 1px solid #beded8;
+      background: #e8f6f3;
+      color: var(--ok);
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .top-actions {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 16px;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
-    .brand { display: flex; align-items: center; gap: 12px; }
-    .brand-mark {
-      width: 38px; height: 38px; border-radius: 8px; display: grid; place-items: center;
-      background: var(--brand); color: #fff; font-weight: 800;
+
+    .config-toggle {
+      width: auto;
+      min-width: 150px;
+      padding: 9px 12px;
+      background: #334155;
     }
-    h1 { margin: 0; font-size: 22px; line-height: 1.1; }
-    .subtitle { margin: 3px 0 0; color: var(--muted); font-size: 14px; }
-    .status-chip {
-      border: 1px solid #bee3db; background: var(--success-soft); color: #0b5f59;
-      border-radius: 999px; padding: 7px 11px; font-size: 13px; font-weight: 700;
-    }
-    .workspace {
-      max-width: 1600px;
-      min-height: calc(100vh - 78px);
-      margin: 0 auto;
-      padding: 22px 22px 28px;
+
+    .grid {
       display: grid;
-      grid-template-columns: minmax(360px, 0.9fr) minmax(520px, 1.4fr);
-      gap: 22px;
-      align-items: stretch;
+      gap: 16px;
+      min-height: calc(100vh - 100px);
     }
+
+    .config-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(520px, 94vw);
+      height: 100vh;
+      z-index: 1200;
+      background: var(--surface);
+      border-left: 1px solid var(--line);
+      box-shadow: -16px 0 38px rgba(23, 33, 47, 0.18);
+      transform: translateX(100%);
+      transition: transform .22s ease;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .config-drawer.open {
+      transform: translateX(0);
+    }
+
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.34);
+      z-index: 1100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s ease;
+    }
+
+    .backdrop.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .config-drawer .panel { min-height: auto; box-shadow: none; border-radius: 10px; }
+
+    .config-drawer .panel-body {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      align-items: end;
+    }
+
+    .config-drawer .wide {
+      grid-column: span 2;
+    }
+
     .panel {
-      background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
-      box-shadow: var(--shadow); display: flex; flex-direction: column; min-height: 0;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
-    .panel-header { padding: 16px 18px; border-bottom: 1px solid var(--line); }
-    .panel-title { margin: 0; font-size: 17px; line-height: 1.2; }
-    .panel-note { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
-    .input-body { padding: 18px; display: flex; flex: 1; flex-direction: column; min-height: 0; }
+
+    .panel-head {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfdff;
+    }
+    .panel-head h2 { margin: 0; font-size: 16px; }
+    .panel-head p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+    .panel-body { padding: 16px; display: grid; gap: 12px; }
+    .row { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+    .row.single { grid-template-columns: 1fr; }
+
     label {
-      display: block; margin-bottom: 8px; font-size: 13px; font-weight: 800;
-      text-transform: uppercase; color: #3d4f63;
+      font-size: 12px;
+      color: #3d4f63;
+      font-weight: 800;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      display: block;
+    }
+    select, input, textarea, button {
+      width: 100%;
+      font: inherit;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+    }
+    select, input, textarea {
+      padding: 10px 12px;
+      background: #fff;
+      color: var(--ink);
     }
     textarea {
-      width: 100%; min-height: 520px; flex: 1; border: 1px solid var(--line); border-radius: 8px;
-      padding: 14px; color: var(--ink); background: #fbfdff; font: inherit; font-size: 15px;
-      line-height: 1.5; resize: vertical; outline: none;
-      transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
-    }
-    textarea:focus {
-      border-color: rgba(15, 118, 110, 0.7);
-      background: #fff;
-      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+      min-height: 270px;
+      resize: vertical;
+      line-height: 1.45;
     }
     button {
-      width: 100%; margin-top: 14px; border: none; border-radius: 8px; padding: 13px 16px;
-      background: var(--brand); color: #fff; font-weight: 800; font-size: 15px;
-      cursor: pointer; transition: background .2s ease, transform .2s ease;
+      border: none;
+      background: var(--brand);
+      color: #fff;
+      font-weight: 700;
+      padding: 11px 12px;
+      cursor: pointer;
     }
-    button:hover { background: var(--brand-hover); }
-    button:active { transform: translateY(1px); }
-    button:disabled { background: #9bb5b2; cursor: not-allowed; transform: none; }
-    .summary { padding: 18px; border-bottom: 1px solid var(--line); flex: 0 0 auto; }
-    .summary-label { margin: 0 0 8px; color: var(--muted); font-size: 13px; font-weight: 800; text-transform: uppercase; }
-    .summary-text { margin: 0; min-height: 72px; white-space: pre-wrap; line-height: 1.55; font-size: 15px; }
-    .result-grid { padding: 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; flex: 1; }
-    .metric-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 0 18px 18px; }
-    .card { border: 1px solid var(--line); border-radius: 8px; background: var(--surface-soft); padding: 14px; min-height: 150px; }
-    .card h3 { margin: 0 0 10px; font-size: 14px; line-height: 1.2; }
-    .card.topic { background: var(--blue-soft); border-color: #c9dcff; }
-    .card.action { background: var(--amber-soft); border-color: #f2d6a1; }
-    .card.people { background: var(--rose-soft); border-color: #f9c6d0; }
-    ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
-    li { position: relative; padding-left: 15px; color: #2e3f53; font-size: 14px; line-height: 1.35; }
-    li::before {
-      content: ""; position: absolute; left: 0; top: .55em; width: 6px; height: 6px;
-      border-radius: 999px; background: currentColor; opacity: .5;
+    button:hover { background: var(--brand-dark); }
+    button.alt { background: #334155; }
+    button.warn { background: #b45309; }
+    button.danger { background: #b91c1c; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      width: fit-content;
+      border: 1px solid transparent;
     }
-    .empty { color: #738398; font-style: italic; }
-    .empty::before { display: none; }
-    .metric { min-height: 96px; display: flex; flex-direction: column; justify-content: center; gap: 7px; }
-    .metric-label { color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; }
-    .badge {
-      align-self: flex-start; border-radius: 999px; padding: 8px 12px; background: var(--success-soft);
-      color: #0b5f59; font-size: 13px; font-weight: 800; text-transform: uppercase;
+    .chip.ok { background: #e8f6f3; color: var(--ok); border-color: #bde2d8; }
+    .chip.bad { background: #fff1f2; color: var(--bad); border-color: #fecdd3; }
+    .chip.info { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+
+    .result {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
     }
-    .confidence { font-size: 30px; line-height: 1; font-weight: 900; color: var(--blue); }
+    .card {
+      border: 1px solid var(--line);
+      background: #f9fbfd;
+      border-radius: 8px;
+      padding: 12px;
+      min-height: 120px;
+    }
+    .card.full { grid-column: 1 / -1; }
+    .card h3 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: #334155;
+      text-transform: uppercase;
+    }
+    .value { margin: 0; white-space: pre-wrap; line-height: 1.45; }
+    ul { margin: 0; padding-left: 18px; }
+    li { margin: 5px 0; }
+    .muted { color: var(--muted); font-style: italic; }
+    .actions-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+    .action-item {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 8px;
+      background: #fff;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .action-meta {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
     #toast {
-      position: fixed; top: 18px; left: 50%; z-index: 9999; display: none;
-      max-width: min(92vw, 680px); transform: translateX(-50%); border-radius: 8px;
-      padding: 12px 16px; background: #991b1b; color: #fff;
-      box-shadow: 0 14px 30px rgba(153, 27, 27, 0.24); text-align: center; font-weight: 700;
+      position: fixed;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+      display: none;
+      max-width: min(94vw, 780px);
+      padding: 11px 14px;
+      border-radius: 8px;
+      background: #1f2937;
+      color: #fff;
+      font-weight: 700;
+      text-align: center;
     }
-    @media (max-width: 900px) {
-      .workspace { grid-template-columns: 1fr; min-height: auto; padding-top: 14px; }
-      textarea { min-height: 300px; }
-    }
-    @media (max-width: 620px) {
-      .topbar-inner { align-items: flex-start; flex-direction: column; }
-      .workspace { padding: 0 12px 18px; }
-      .result-grid, .metric-row { grid-template-columns: 1fr; }
+
+    @media (max-width: 980px) {
+      .grid { grid-template-columns: 1fr; min-height: auto; }
+      .result { grid-template-columns: 1fr; }
+      .row { grid-template-columns: 1fr; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .top-actions { justify-content: flex-start; }
+      .config-drawer { width: 100vw; }
+      .config-drawer .panel-body { grid-template-columns: 1fr; }
+      .config-drawer .wide { grid-column: auto; }
     }
   </style>
 </head>
 <body>
-  <div id="toast">Erro ao processar requisicao</div>
+  <div id="toast"></div>
+  <div id="configBackdrop" class="backdrop"></div>
 
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <div class="brand-mark">EM</div>
-        <div>
-          <h1>EasyMeet</h1>
-          <p class="subtitle">Analise de reunioes com saida estruturada</p>
-        </div>
+  <div class="shell">
+    <div class="topbar">
+      <div>
+        <h1>EasyMeet</h1>
+        <p class="sub">Plataforma local de análise inteligente de reuniões com múltiplos provedores de IA.</p>
       </div>
-      <div class="status-chip">IA de resumo</div>
+      <div class="top-actions">
+        <span class="status">Windows Local</span>
+        <button id="toggleConfig" class="config-toggle" type="button" aria-controls="configDrawer" aria-expanded="false">Configurar IA</button>
+      </div>
     </div>
-  </header>
 
-  <main class="workspace">
-    <section class="panel">
-      <div class="panel-header">
-        <h2 class="panel-title">Transcricao</h2>
-        <p class="panel-note">Cole o conteudo da reuniao para gerar uma leitura executiva.</p>
-      </div>
-      <div class="input-body">
-        <label for="texto">Texto da reuniao</label>
-        <textarea id="texto" placeholder="Cole aqui a transcricao completa da reuniao..."></textarea>
-        <button id="enviar">Analisar reuniao</button>
-      </div>
-    </section>
+    <section id="configDrawer" class="config-drawer" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="configTitle">
+      <section class="panel">
+        <div class="panel-head">
+          <h2 id="configTitle">Configuração das IAs</h2>
+          <p>Gerenciamento seguro de credenciais no Windows Credential Manager.</p>
+        </div>
+        <div class="panel-body">
+          <div>
+            <label for="providerConfig">Provedor</label>
+            <select id="providerConfig"></select>
+          </div>
 
-    <section class="panel">
-      <div class="panel-header">
-        <h2 class="panel-title">Resultado da analise</h2>
-        <p class="panel-note">Resumo, decisoes e responsaveis aparecem separados para consulta rapida.</p>
-      </div>
-      <div class="summary">
-        <p class="summary-label">Resumo</p>
-        <p id="resumo" class="summary-text empty">Aguardando requisicao...</p>
-      </div>
+          <div>
+            <label>Status atual</label>
+            <span id="providerStatus" class="chip info">Carregando...</span>
+          </div>
 
-      <section class="result-grid">
-        <article class="card topic"><h3>Topicos principais</h3><ul id="topicos"></ul></article>
-        <article class="card action"><h3>Acoes</h3><ul id="acoes"></ul></article>
-        <article class="card people"><h3>Responsaveis</h3><ul id="responsaveis"></ul></article>
-        <article class="card"><h3>Classificacao</h3><div id="tipo" class="badge">Desconhecida</div></article>
-      </section>
+          <div class="wide">
+            <label for="apiKey">API Key</label>
+            <input id="apiKey" type="password" autocomplete="off" placeholder="Informe a API Key do provedor selecionado" />
+          </div>
 
-      <section class="metric-row">
-        <article class="card metric"><span class="metric-label">Nivel de confianca</span><div id="confianca" class="confidence">-</div></article>
-        <article class="card metric"><span class="metric-label">Estado</span><div id="estado" class="badge">Pronto</div></article>
+          <button id="saveKey">Salvar</button>
+          <button id="testKey" class="warn">Testar conexão</button>
+          <button id="deleteKey" class="danger">Remover chave</button>
+        </div>
       </section>
     </section>
-  </main>
+
+    <div class="grid">
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Análise da reunião</h2>
+          <p>Selecione o provedor e gere o resumo estruturado com a IA configurada.</p>
+        </div>
+        <div class="panel-body">
+          <div class="row">
+            <div>
+              <label for="providerAnalysis">Provedor para análise</label>
+              <select id="providerAnalysis"></select>
+            </div>
+            <div>
+              <label>Execucao</label>
+              <span id="analysisState" class="chip info">Pronto</span>
+            </div>
+          </div>
+          <div class="row single">
+            <button id="switchToGroq" type="button" class="alt" style="display:none;">Quota do Gemini excedida: usar Groq agora</button>
+          </div>
+
+          <div>
+            <label for="transcricao">Transcrição</label>
+            <textarea id="transcricao" placeholder="Cole aqui a transcrição completa da reunião..."></textarea>
+          </div>
+
+          <details>
+            <summary>Configurações avançadas de IA</summary>
+            <div class="row" style="margin-top:10px;">
+              <div>
+                <label for="modeloIa">Modelo (opcional)</label>
+                <select id="modeloIa"></select>
+              </div>
+              <div>
+                <label for="temperaturaIa">Temperatura (0 a 2)</label>
+                <select id="temperaturaIa">
+                  <option value="">Padrão do provedor (0.2 - Conservador)</option>
+                  <option value="0">0.0 - Muito determinístico</option>
+                  <option value="0.1">0.1 - Determinístico</option>
+                  <option value="0.2">0.2 - Conservador</option>
+                  <option value="0.4">0.4 - Levemente criativo</option>
+                  <option value="0.7">0.7 - Balanceado</option>
+                  <option value="1">1.0 - Mais criativo</option>
+                </select>
+              </div>
+            </div>
+            <div class="row" style="margin-top:10px;">
+              <div>
+                <label for="maxTokensIa">Máx. tokens (64 a 8192)</label>
+                <input id="maxTokensIa" type="number" min="64" max="8192" step="1" placeholder="Padrão sugerido: 1024" />
+              </div>
+            </div>
+            <div class="row" style="margin-top:10px;">
+              <div><button id="saveDefaultsIa" type="button" class="alt">Salvar como padrão</button></div>
+              <div><button id="clearDefaultsIa" type="button" class="alt">Restaurar padrão</button></div>
+            </div>
+          </details>
+
+          <button id="analisar">Analisar reunião</button>
+
+          <section class="result">
+            <article class="card full">
+              <h3>Resumo</h3>
+              <p id="resumo" class="value muted">Aguardando análise...</p>
+            </article>
+            <article class="card"><h3>Tópicos</h3><ul id="topicos"></ul></article>
+            <article class="card"><h3>Ações</h3><ul id="acoes" class="actions-list"></ul></article>
+            <article class="card"><h3>Responsáveis</h3><ul id="responsaveis"></ul></article>
+            <article class="card"><h3>Decisões</h3><ul id="decisoes"></ul></article>
+            <article class="card"><h3>Pendências</h3><ul id="pendencias"></ul></article>
+            <article class="card"><h3>Tipo de reunião</h3><p id="tipoReuniao" class="value muted">-</p></article>
+            <article class="card"><h3>Confiança</h3><p id="confianca" class="value muted">-</p></article>
+          </section>
+        </div>
+      </section>
+    </div>
+  </div>
 
   <script>
-    const btn = document.getElementById("enviar");
-    const input = document.getElementById("texto");
-    const toast = document.getElementById("toast");
+    const toastEl = document.getElementById("toast");
+    const toggleConfigBtn = document.getElementById("toggleConfig");
+    const configDrawerEl = document.getElementById("configDrawer");
+    const configBackdropEl = document.getElementById("configBackdrop");
+    const providerConfigEl = document.getElementById("providerConfig");
+    const providerAnalysisEl = document.getElementById("providerAnalysis");
+    const providerStatusEl = document.getElementById("providerStatus");
+    const apiKeyEl = document.getElementById("apiKey");
+    const analysisStateEl = document.getElementById("analysisState");
+    const transcricaoEl = document.getElementById("transcricao");
+    const switchToGroqBtn = document.getElementById("switchToGroq");
+    const modeloIaEl = document.getElementById("modeloIa");
+    const temperaturaIaEl = document.getElementById("temperaturaIa");
+    const maxTokensIaEl = document.getElementById("maxTokensIa");
+    const saveDefaultsIaBtn = document.getElementById("saveDefaultsIa");
+    const clearDefaultsIaBtn = document.getElementById("clearDefaultsIa");
+
     const resumoEl = document.getElementById("resumo");
     const topicosEl = document.getElementById("topicos");
     const acoesEl = document.getElementById("acoes");
     const responsaveisEl = document.getElementById("responsaveis");
-    const tipoEl = document.getElementById("tipo");
+    const decisoesEl = document.getElementById("decisoes");
+    const pendenciasEl = document.getElementById("pendencias");
+    const tipoReuniaoEl = document.getElementById("tipoReuniao");
     const confiancaEl = document.getElementById("confianca");
-    const estadoEl = document.getElementById("estado");
+
+    const saveKeyBtn = document.getElementById("saveKey");
+    const testKeyBtn = document.getElementById("testKey");
+    const deleteKeyBtn = document.getElementById("deleteKey");
+    const analisarBtn = document.getElementById("analisar");
+    const advancedDefaultsStorageKey = "easymeet:ia-advanced-defaults:v1";
+    const lastProviderStorageKey = "easymeet:last-provider:v1";
+    const modelosPorProvedor = {
+      Gemini: [
+        { value: "", label: "Padrão do provedor (gemini-2.5-flash)" },
+        { value: "gemini-2.5-flash", label: "gemini-2.5-flash" },
+        { value: "gemini-2.5-flash-lite", label: "gemini-2.5-flash-lite" },
+        { value: "gemini-2.0-flash", label: "gemini-2.0-flash" },
+        { value: "gemini-1.5-flash", label: "gemini-1.5-flash" }
+      ],
+      Groq: [
+        { value: "", label: "Padrão do provedor (llama-3.1-8b-instant)" },
+        { value: "llama-3.1-8b-instant", label: "llama-3.1-8b-instant" },
+        { value: "llama-3.3-70b-versatile", label: "llama-3.3-70b-versatile" }
+      ],
+      OpenAI: [
+        { value: "", label: "Padrão do provedor (gpt-4.1-mini)" },
+        { value: "gpt-4.1-mini", label: "gpt-4.1-mini" },
+        { value: "gpt-4.1", label: "gpt-4.1" }
+      ],
+      Anthropic: [
+        { value: "", label: "Padrão do provedor (claude-3-7-sonnet-20250219)" },
+        { value: "claude-3-7-sonnet-20250219", label: "claude-3-7-sonnet-20250219" },
+        { value: "claude-sonnet-4-20250514", label: "claude-sonnet-4-20250514" }
+      ],
+      Mistral: [
+        { value: "", label: "Padrão do provedor (mistral-small-latest)" },
+        { value: "mistral-small-latest", label: "mistral-small-latest" },
+        { value: "mistral-medium-latest", label: "mistral-medium-latest" }
+      ],
+      Cohere: [
+        { value: "", label: "Padrão do provedor (command-a-03-2025)" },
+        { value: "command-a-03-2025", label: "command-a-03-2025" },
+        { value: "command-r-08-2024", label: "command-r-08-2024" }
+      ],
+      AzureOpenAI: [
+        { value: "", label: "Padrão do provedor (deployment configurado)" },
+        { value: "gpt-4.1-mini", label: "gpt-4.1-mini (deployment)" },
+        { value: "gpt-4.1", label: "gpt-4.1 (deployment)" }
+      ]
+    };
+    const maxTokensSugeridoPorProvedor = {
+      Gemini: 1024,
+      Groq: 1024,
+      OpenAI: 1024,
+      Anthropic: 1024,
+      Mistral: 1024,
+      Cohere: 1024,
+      AzureOpenAI: 1024
+    };
+    const temperaturaPadraoPorProvedor = {
+      Gemini: 0.2,
+      Groq: 0.2,
+      OpenAI: 0.2,
+      Anthropic: 0.2,
+      Mistral: 0.2,
+      Cohere: 0.2,
+      AzureOpenAI: 0.2
+    };
+
+    let providerStatus = {};
     let toastTimeout;
 
-    function showError(message) {
-      toast.textContent = message;
-      toast.style.display = "block";
-      if (toastTimeout) clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(() => { toast.style.display = "none"; }, 7000);
+    function syncDrawerState(open) {
+      configDrawerEl.classList.toggle("open", open);
+      configBackdropEl.classList.toggle("open", open);
+      configDrawerEl.setAttribute("aria-hidden", open ? "false" : "true");
+      toggleConfigBtn.textContent = open ? "Ocultar configuração" : "Configurar IA";
+      toggleConfigBtn.setAttribute("aria-expanded", String(open));
+      document.body.style.overflow = open ? "hidden" : "";
     }
 
-    function renderList(el, values) {
+    function toggleConfigDrawer() {
+      const open = !configDrawerEl.classList.contains("open");
+      syncDrawerState(open);
+    }
+
+    function closeConfigDrawer() {
+      syncDrawerState(false);
+    }
+
+    function showToast(message, isError = false) {
+      toastEl.style.display = "block";
+      toastEl.textContent = message;
+      toastEl.style.background = isError ? "#b91c1c" : "#1f2937";
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => toastEl.style.display = "none", 4500);
+    }
+
+    function mapFriendlyErrorMessage(rawMessage) {
+      const message = (rawMessage || "").toString().trim();
+      const lower = message.toLowerCase();
+
+      if (!message) {
+        return "Não foi possível concluir a análise agora. Tente novamente em instantes.";
+      }
+
+      if (lower.includes("chave de api nao configurada") || lower.includes("chave de api não configurada")) {
+        return "A chave de API do provedor selecionado ainda não foi configurada. Abra 'Configurar IA' e salve a chave.";
+      }
+
+      if (lower.includes("chave de api nao informada") || lower.includes("chave de api não informada")) {
+        return "A chave de API informada está ausente. Verifique a configuração do provedor.";
+      }
+
+      if (lower.includes("status 401") || lower.includes("status 403")) {
+        return "Não foi possível autenticar no provedor de IA. Confira a API Key e tente novamente.";
+      }
+
+      if (lower.includes("status 429") || lower.includes("too many requests")) {
+        if (lower.includes("insufficient_quota") || lower.includes("quota") || lower.includes("billing") || lower.includes("credit")) {
+          return "Sua conta/projeto atingiu o limite de uso (quota/crédito) no provedor. Verifique billing, orçamento e limites da API.";
+        }
+        return "O provedor recebeu muitas requisições agora. Aguarde alguns segundos e tente novamente.";
+      }
+
+      if (lower.includes("status 503") || lower.includes("high demand") || lower.includes("service unavailable")) {
+        return "O provedor de IA está com alta demanda no momento. Tente novamente em instantes.";
+      }
+
+      if (lower.includes("status 504") || lower.includes("gateway timeout") || lower.includes("tempo limite")) {
+        return "A resposta da IA demorou mais do que o esperado. Tente novamente.";
+      }
+
+      if (lower.includes("decommissioned") || lower.includes("no longer supported")) {
+        return "O modelo selecionado foi descontinuado pelo provedor. Escolha outro modelo e tente novamente.";
+      }
+
+      if (lower.includes("status 404") && lower.includes("modelo")) {
+        return "O modelo selecionado não está disponível para sua conta/chave. Selecione outro modelo.";
+      }
+
+      if (lower.includes("status 400")) {
+        return "Não foi possível processar a solicitação com os parâmetros atuais. Revise o modelo/configurações e tente novamente.";
+      }
+
+      return message;
+    }
+
+    function shouldSuggestGroqSwitch(rawMessage) {
+      const msg = (rawMessage || "").toString().toLowerCase();
+      return msg.includes("gemini retornou status 429")
+        && (msg.includes("exceeded your current quota") || msg.includes("quota"));
+    }
+
+    function hideGroqSuggestion() {
+      switchToGroqBtn.style.display = "none";
+    }
+
+    function showGroqSuggestionIfAvailable() {
+      const hasGroq = Array.from(providerAnalysisEl.options).some(x => x.value === "Groq");
+      switchToGroqBtn.style.display = hasGroq ? "block" : "none";
+    }
+
+    function toApiProvider(value) {
+      return value;
+    }
+
+    function saveLastProvider(provider) {
+      if (!provider) return;
+      localStorage.setItem(lastProviderStorageKey, provider);
+    }
+
+    function loadLastProvider() {
+      return localStorage.getItem(lastProviderStorageKey) || "";
+    }
+
+    function updateModeloOptionsForProvider() {
+      const provider = toApiProvider(providerAnalysisEl.value);
+      const options = modelosPorProvedor[provider] || [{ value: "", label: "Padrão do provedor" }];
+      const current = modeloIaEl.value;
+
+      modeloIaEl.innerHTML = "";
+      options.forEach(opt => {
+        const option = document.createElement("option");
+        option.value = opt.value;
+        option.textContent = opt.label;
+        modeloIaEl.appendChild(option);
+      });
+
+      if (options.some(x => x.value === current)) {
+        modeloIaEl.value = current;
+      }
+    }
+
+    function updateMaxTokensPlaceholderForProvider() {
+      const provider = toApiProvider(providerAnalysisEl.value);
+      const sugerido = maxTokensSugeridoPorProvedor[provider] ?? 1024;
+      maxTokensIaEl.placeholder = `Padrão sugerido: ${sugerido}`;
+    }
+
+    function updateTemperaturaDefaultLabelForProvider() {
+      const provider = toApiProvider(providerAnalysisEl.value);
+      const sugerido = temperaturaPadraoPorProvedor[provider] ?? 0.2;
+      if (temperaturaIaEl.options.length > 0) {
+        temperaturaIaEl.options[0].textContent = `Padrão do provedor (${sugerido.toFixed(1)} - Conservador)`;
+      }
+    }
+
+    function readDefaultsStore() {
+      try {
+        const raw = localStorage.getItem(advancedDefaultsStorageKey);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return typeof parsed === "object" && parsed ? parsed : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function writeDefaultsStore(store) {
+      localStorage.setItem(advancedDefaultsStorageKey, JSON.stringify(store));
+    }
+
+    function setAdvancedConfigFields(config) {
+      modeloIaEl.value = config?.modelo || "";
+      temperaturaIaEl.value = config?.temperatura ?? "";
+      maxTokensIaEl.value = config?.maxTokens ?? "";
+    }
+
+    function applyDefaultsForCurrentProvider() {
+      const provider = toApiProvider(providerAnalysisEl.value);
+      const store = readDefaultsStore();
+      updateModeloOptionsForProvider();
+      updateTemperaturaDefaultLabelForProvider();
+      updateMaxTokensPlaceholderForProvider();
+      setAdvancedConfigFields(store[provider] || null);
+    }
+
+    function readAdvancedConfig() {
+      const modelo = (modeloIaEl.value || "").trim();
+      const temperaturaRaw = (temperaturaIaEl.value || "").trim();
+      const maxTokensRaw = (maxTokensIaEl.value || "").trim();
+
+      const hasTemperatura = temperaturaRaw.length > 0;
+      const hasMaxTokens = maxTokensRaw.length > 0;
+
+      const temperatura = hasTemperatura ? Number(temperaturaRaw) : null;
+      const maxTokens = hasMaxTokens ? Number(maxTokensRaw) : null;
+
+      if (hasTemperatura && (!Number.isFinite(temperatura) || temperatura < 0 || temperatura > 2)) {
+        throw new Error("Temperatura inválida. Use um valor entre 0 e 2.");
+      }
+
+      if (hasMaxTokens && (!Number.isFinite(maxTokens) || maxTokens < 64 || maxTokens > 8192)) {
+        throw new Error("Máx. tokens inválido. Use um valor entre 64 e 8192.");
+      }
+
+      if (!modelo && !hasTemperatura && !hasMaxTokens) {
+        return null;
+      }
+
+      return {
+        modelo: modelo || null,
+        temperatura: hasTemperatura ? temperatura : null,
+        maxTokens: hasMaxTokens ? Math.trunc(maxTokens) : null
+      };
+    }
+
+    function saveAdvancedDefaults() {
+      const provider = toApiProvider(providerAnalysisEl.value);
+      const config = readAdvancedConfig();
+      const store = readDefaultsStore();
+      store[provider] = config;
+      writeDefaultsStore(store);
+      showToast(`Configurações padrão salvas para ${provider}.`);
+    }
+
+    function clearAdvancedDefaults() {
+      const provider = toApiProvider(providerAnalysisEl.value);
+      const store = readDefaultsStore();
+      delete store[provider];
+      writeDefaultsStore(store);
+      setAdvancedConfigFields(null);
+      showToast(`Padrões restaurados para ${provider}.`);
+    }
+
+    function renderList(el, list) {
       el.innerHTML = "";
-      if (!Array.isArray(values) || values.length === 0) {
+      if (!Array.isArray(list) || list.length === 0) {
         const li = document.createElement("li");
-        li.textContent = "Nao identificado";
-        li.className = "empty";
+        li.className = "muted";
+        li.textContent = "Não identificado";
         el.appendChild(li);
         return;
       }
 
-      values.forEach(item => {
+      list.forEach(item => {
         const li = document.createElement("li");
         li.textContent = item;
         el.appendChild(li);
       });
     }
 
-    function resetOutput() {
-      resumoEl.textContent = "Aguardando requisicao...";
-      resumoEl.className = "summary-text empty";
-      tipoEl.textContent = "Desconhecida";
-      confiancaEl.textContent = "-";
-      estadoEl.textContent = "Pronto";
-      renderList(topicosEl, []);
-      renderList(acoesEl, []);
-      renderList(responsaveisEl, []);
-    }
-
-    function renderOutput(data) {
-      resumoEl.textContent = data.resumo || "Nao informado";
-      resumoEl.className = "summary-text";
-      renderList(topicosEl, data.topicosPrincipais || []);
-      renderList(acoesEl, data.acoes || []);
-      renderList(responsaveisEl, data.responsaveis || []);
-      tipoEl.textContent = data.tipoReuniao || "Desconhecida";
-      const confidence = Number(data.nivelConfianca);
-      confiancaEl.textContent = Number.isFinite(confidence) ? `${Math.round(confidence * 100)}%` : "Nao informado";
-      estadoEl.textContent = "Concluido";
-    }
-
-    resetOutput();
-
-    btn.addEventListener("click", async () => {
-      const texto = input.value.trim();
-      if (!texto) {
-        showError("Por favor, insira o texto da reuniao.");
+    function renderActions(el, list) {
+      el.innerHTML = "";
+      if (!Array.isArray(list) || list.length === 0) {
+        const li = document.createElement("li");
+        li.className = "muted";
+        li.textContent = "Não identificado";
+        el.appendChild(li);
         return;
       }
 
-      btn.disabled = true;
-      toast.style.display = "none";
-      resumoEl.textContent = "Processando...";
-      resumoEl.className = "summary-text";
-      estadoEl.textContent = "Processando";
+      list.forEach(item => {
+        const li = document.createElement("li");
+        li.className = "action-item";
+        const descricao = item?.descricao || "Sem descrição";
+        const responsavel = item?.responsavel || "Não identificado";
+        const prazo = item?.prazo || "";
 
+        const meta = prazo ? `Responsável: ${responsavel} | Prazo: ${prazo}` : `Responsável: ${responsavel}`;
+        li.innerHTML = `<div>${descricao}</div><div class="action-meta">${meta}</div>`;
+        el.appendChild(li);
+      });
+    }
+
+    function resetAnalysisOutput() {
+      resumoEl.textContent = "Aguardando análise...";
+      resumoEl.className = "value muted";
+      renderList(topicosEl, []);
+      renderActions(acoesEl, []);
+      renderList(responsaveisEl, []);
+      renderList(decisoesEl, []);
+      renderList(pendenciasEl, []);
+      tipoReuniaoEl.textContent = "-";
+      tipoReuniaoEl.className = "value muted";
+      confiancaEl.textContent = "-";
+      confiancaEl.className = "value muted";
+    }
+
+    function updateProviderStatusChip() {
+      const provider = providerConfigEl.value;
+      const configured = providerStatus[provider] === true;
+      providerStatusEl.textContent = configured ? "Configurado" : "Não configurado";
+      providerStatusEl.className = configured ? "chip ok" : "chip bad";
+    }
+
+    async function fetchProviders() {
+      const resp = await fetch("/api/ia/provedores");
+      if (!resp.ok) throw new Error("Falha ao carregar provedores.");
+      const providers = await resp.json();
+      providerConfigEl.innerHTML = "";
+      providerAnalysisEl.innerHTML = "";
+      providers.forEach(p => {
+        const optionA = document.createElement("option");
+        optionA.value = p.provedorIA;
+        optionA.textContent = p.nome;
+        providerConfigEl.appendChild(optionA);
+
+        const optionB = document.createElement("option");
+        optionB.value = p.provedorIA;
+        optionB.textContent = p.nome;
+        providerAnalysisEl.appendChild(optionB);
+      });
+
+      const lastProvider = loadLastProvider();
+      if (lastProvider && providers.some(p => p.provedorIA === lastProvider)) {
+        providerConfigEl.value = lastProvider;
+        providerAnalysisEl.value = lastProvider;
+      }
+    }
+
+    async function fetchStatus() {
+      const resp = await fetch("/api/ia/credenciais/status");
+      if (!resp.ok) throw new Error("Falha ao carregar status de credenciais.");
+      const status = await resp.json();
+      providerStatus = {};
+      status.forEach(item => { providerStatus[item.provedorIA] = item.configurado; });
+      updateProviderStatusChip();
+    }
+
+    async function saveOrUpdateKey() {
+      const provedorIA = toApiProvider(providerConfigEl.value);
+      const apiKey = apiKeyEl.value.trim();
+      if (!apiKey) {
+        showToast("Informe a API Key antes de salvar.", true);
+        return;
+      }
+
+      const resp = await fetch("/api/ia/credenciais", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ provedorIA, apiKey })
+      });
+
+      if (!resp.ok) {
+        showToast("Não foi possível salvar a chave.", true);
+        return;
+      }
+
+      await fetchStatus();
+      apiKeyEl.value = "";
+      showToast("Chave salva com sucesso.");
+    }
+
+    async function testKey() {
+      const provedorIA = toApiProvider(providerConfigEl.value);
+      const apiKey = apiKeyEl.value.trim();
+      if (!apiKey) {
+        showToast("Informe uma API Key para testar a conexão.", true);
+        return;
+      }
+
+      testKeyBtn.disabled = true;
+      testKeyBtn.textContent = "Testando...";
       try {
-        const resp = await fetch("/api/reunioes/resumir", {
+        const resp = await fetch("/api/ia/credenciais/testar", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ texto })
+          body: JSON.stringify({ provedorIA, apiKey })
         });
 
         if (!resp.ok) {
-          resetOutput();
-          let errorMsg = "Erro desconhecido ao processar resumo.";
-          try {
-            const payload = await resp.json();
-            errorMsg = payload.mensagem || payload.detail || errorMsg;
-          } catch {
-            const textErr = await resp.text();
-            if (textErr) errorMsg = textErr;
-          }
-          showError(errorMsg);
+          showToast("Falha ao testar conexão.", true);
           return;
         }
 
-        const payload = await resp.json();
-        renderOutput(payload);
-      } catch (error) {
-        resetOutput();
-        showError("Falha na comunicacao com o servidor: " + error.message);
+        const data = await resp.json();
+        if (data.sucesso) {
+          showToast("Conexão válida.");
+        } else {
+          const detalhe = (data.mensagem || "").toString().trim();
+          const amigavel = mapFriendlyErrorMessage(detalhe || "Conexão recusada.");
+          const mensagemFinal = detalhe && amigavel !== detalhe
+            ? `${amigavel} Detalhe técnico: ${detalhe}`
+            : amigavel;
+          showToast(mensagemFinal, true);
+        }
       } finally {
-        btn.disabled = false;
+        testKeyBtn.disabled = false;
+        testKeyBtn.textContent = "Testar conexão";
+      }
+    }
+
+    async function deleteKey() {
+      const provedorIA = toApiProvider(providerConfigEl.value);
+      const resp = await fetch(`/api/ia/credenciais/${provedorIA}`, { method: "DELETE" });
+      if (!resp.ok) {
+        showToast("Falha ao remover chave.", true);
+        return;
+      }
+      await fetchStatus();
+      showToast("Chave removida com sucesso.");
+    }
+
+    async function analisarReuniao() {
+      hideGroqSuggestion();
+      const transcricao = transcricaoEl.value.trim();
+      const provedorIA = toApiProvider(providerAnalysisEl.value);
+      if (!transcricao) {
+        showToast("Informe a transcrição para análise.", true);
+        return;
+      }
+
+      analisarBtn.disabled = true;
+      analysisStateEl.textContent = "Processando";
+      analysisStateEl.className = "chip info";
+      resumoEl.textContent = "Processando...";
+      resumoEl.className = "value";
+
+      try {
+        const configuracaoIA = readAdvancedConfig();
+        const payload = { transcricao, provedorIA };
+        if (configuracaoIA) {
+          payload.configuracaoIA = configuracaoIA;
+        }
+
+        const resp = await fetch("/api/reunioes/resumir", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) {
+          let error = "Falha na análise.";
+          try {
+            const payload = await resp.json();
+            error = payload.mensagem || payload.detail || error;
+          } catch {}
+          throw new Error(error);
+        }
+
+        const result = await resp.json();
+        resumoEl.textContent = result.resumo || "Não informado";
+        resumoEl.className = "value";
+        renderList(topicosEl, result.topicosPrincipais);
+        renderActions(acoesEl, result.acoes);
+        renderList(responsaveisEl, result.responsaveis);
+        renderList(decisoesEl, result.decisoes);
+        renderList(pendenciasEl, result.pendencias);
+        tipoReuniaoEl.textContent = result.tipoReuniao || "Desconhecida";
+        tipoReuniaoEl.className = "value";
+        confiancaEl.textContent = Number.isFinite(Number(result.nivelConfianca))
+          ? `${Math.round(Number(result.nivelConfianca) * 100)}%`
+          : "Não informado";
+        confiancaEl.className = "value";
+        analysisStateEl.textContent = "Concluido";
+        analysisStateEl.className = "chip ok";
+      } catch (err) {
+        resetAnalysisOutput();
+        analysisStateEl.textContent = "Erro";
+        analysisStateEl.className = "chip bad";
+        const detalhe = (err?.message || "").toString().trim();
+        const amigavel = mapFriendlyErrorMessage(detalhe || "Erro inesperado na análise.");
+        const mensagemFinal = detalhe && amigavel !== detalhe
+          ? `${amigavel} Detalhe técnico: ${detalhe}`
+          : amigavel;
+        if (shouldSuggestGroqSwitch(detalhe)) {
+          showGroqSuggestionIfAvailable();
+        }
+        showToast(mensagemFinal, true);
+      } finally {
+        analisarBtn.disabled = false;
+      }
+    }
+
+    providerConfigEl.addEventListener("change", updateProviderStatusChip);
+    providerConfigEl.addEventListener("change", () => saveLastProvider(toApiProvider(providerConfigEl.value)));
+    toggleConfigBtn.addEventListener("click", toggleConfigDrawer);
+    configBackdropEl.addEventListener("click", closeConfigDrawer);
+    saveKeyBtn.addEventListener("click", saveOrUpdateKey);
+    testKeyBtn.addEventListener("click", testKey);
+    deleteKeyBtn.addEventListener("click", deleteKey);
+    analisarBtn.addEventListener("click", analisarReuniao);
+    saveDefaultsIaBtn.addEventListener("click", () => {
+      try {
+        saveAdvancedDefaults();
+      } catch (err) {
+        showToast(err.message || "Falha ao salvar padrões avançados.", true);
       }
     });
+    clearDefaultsIaBtn.addEventListener("click", clearAdvancedDefaults);
+    providerAnalysisEl.addEventListener("change", () => {
+      saveLastProvider(toApiProvider(providerAnalysisEl.value));
+      applyDefaultsForCurrentProvider();
+      hideGroqSuggestion();
+    });
+    switchToGroqBtn.addEventListener("click", () => {
+      const hasGroq = Array.from(providerAnalysisEl.options).some(x => x.value === "Groq");
+      if (!hasGroq) {
+        showToast("Provedor Groq não está disponível nesta instância.", true);
+        return;
+      }
+
+      providerAnalysisEl.value = "Groq";
+      providerConfigEl.value = "Groq";
+      providerConfigEl.dispatchEvent(new Event("change"));
+      providerAnalysisEl.dispatchEvent(new Event("change"));
+      showToast("Provedor alterado para Groq. Você já pode analisar novamente.");
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && configDrawerEl.classList.contains("open")) {
+        closeConfigDrawer();
+      }
+    });
+
+    async function bootstrap() {
+      resetAnalysisOutput();
+      await fetchProviders();
+      await fetchStatus();
+      applyDefaultsForCurrentProvider();
+      analysisStateEl.className = "chip info";
+    }
+
+    bootstrap().catch(err => showToast(err.message || "Falha na inicialização.", true));
   </script>
 </body>
 </html>
+
+
+

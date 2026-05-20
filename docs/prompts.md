@@ -325,40 +325,247 @@ Organize por etapa:
 - criação das diretrizes de IA;
 - refatorações.
 
-## 11. Criar template do Pull Request
+## 11. Refatoração e Mlehorias com novos Provedores
 ### Prompt
-Crie o arquivo .github/PR.md.
+Refatore o projeto EasyMeet para suportar múltiplos provedores de IA configuráveis e selecionáveis pelo usuário em tempo de execução.
 
-O template deve conter:
+Objetivo:
+Transformar o EasyMeet em uma plataforma profissional de análise inteligente de reuniões com suporte a múltiplas IA, gerenciamento local seguro de credenciais e seleção dinâmica do provedor durante o uso.
 
-# Resumo
-# Tipo de alteração
-- [ ] Funcionalidade
-- [ ] Correção
-- [ ] Testes
-- [ ] Documentação
-- [ ] Refatoração
+A aplicação é local Windows.
 
-# O que foi implementado
-# Como testar
-# Evidências
-# Requisitos da atividade atendidos
-# Observações
+Provedores iniciais:
+- Gemini
+- Groq
 
-Incluir checklist:
-- [ ] README.md completo
-- [ ] PRD.md
-- [ ] VIABILIDADE.md
-- [ ] BACKLOG.md
-- [ ] UML.md
-- [ ] ADR.md
-- [ ] DIRETRIZES_IA.md
-- [ ] prompts.md
-- [ ] Swagger funcional
-- [ ] IA integrada ao produto
-- [ ] Gemini funcionando
-- [ ] 5 testes automatizados
-- [ ] Pull Request aberto
+Arquitetura desejada:
+
+EasyMeet
+├── Providers
+│   ├── Gemini
+│   ├── Groq
+│   └── Factory
+│
+├── Credentials
+│   ├── Save API Key
+│   ├── Load API Key
+│   ├── Update API Key
+│   ├── Delete API Key
+│   └── Windows Credential Manager
+│
+├── Meeting Analysis
+│   ├── Select Provider
+│   ├── Generate Summary
+│   ├── Extract Actions
+│   ├── Extract Decisions
+│   └── Extract Responsibilities
+
+Requisitos:
+
+1. Criar enum:
+   ProvedorIA
+
+Valores:
+- Gemini
+- Groq
+
+2. Criar interface:
+   IGenerativeAIClient
+
+Métodos:
+- ProvedorIA Provedor { get; }
+- Task<string> GerarConteudoAsync(string prompt, string apiKey, CancellationToken cancellationToken)
+- Task<bool> TestarConexaoAsync(string apiKey, CancellationToken cancellationToken)
+
+3. Refatorar:
+- GeminiClientService
+- GroqClientService
+
+Ambos devem implementar:
+- IGenerativeAIClient
+
+4. Criar:
+   IAProviderFactory
+
+Responsável por:
+- localizar provider correto;
+- validar provider;
+- retornar provider conforme seleção do usuário.
+
+5. Criar interface:
+   IApiKeyStore
+
+Métodos:
+- Task SaveApiKeyAsync(ProvedorIA provedor, string apiKey, CancellationToken cancellationToken)
+- Task<string?> GetApiKeyAsync(ProvedorIA provedor, CancellationToken cancellationToken)
+- Task DeleteApiKeyAsync(ProvedorIA provedor, CancellationToken cancellationToken)
+- Task<bool> HasApiKeyAsync(ProvedorIA provedor, CancellationToken cancellationToken)
+
+6. Criar implementação:
+   WindowsCredentialApiKeyStore
+
+Usar:
+- Windows Credential Manager
+
+Salvar por provedor:
+- EasyMeet:Gemini
+- EasyMeet:Groq
+
+Nunca salvar em:
+- appsettings.json
+- launchSettings.json
+- txt/json local
+- logs
+- GitHub
+
+7. Criar:
+   ApiKeyManagerService
+
+Responsabilidades:
+- salvar chave;
+- alterar chave;
+- remover chave;
+- verificar status;
+- testar conexão.
+
+8. Criar controller:
+   IAConfigController
+
+Endpoints:
+- GET /api/ia/provedores
+- GET /api/ia/credenciais/status
+- POST /api/ia/credenciais
+- DELETE /api/ia/credenciais/{provedor}
+- POST /api/ia/credenciais/testar
+
+9. Criar models:
+- SalvarApiKeyRequest
+- TestarApiKeyRequest
+- ApiKeyStatusResponse
+- ProvedorIAResponse
+
+10. Alterar ResumoReuniaoRequest:
+
+{
+  "transcricao": "",
+  "provedorIA": "Gemini"
+}
+
+Não receber apiKey nesse endpoint.
+
+11. Alterar AgenteResumoReuniaoService:
+
+Fluxo:
+- receber ProvedorIA;
+- buscar chave salva no IApiKeyStore;
+- validar existência da chave;
+- selecionar provider via IAProviderFactory;
+- gerar prompt;
+- chamar provider;
+- retornar resposta estruturada.
+
+12. Caso não exista chave:
+retornar erro claro:
+
+"Chave de API não configurada para o provedor selecionado."
+
+13. Atualizar Swagger:
+- permitir seleção do enum ProvedorIA;
+- documentar providers disponíveis.
+
+14. Atualizar interface web:
+
+Criar duas áreas:
+
+A) Configuração das IA
+- select Gemini/Groq
+- campo password API Key
+- botão Salvar chave
+- botão Alterar chave
+- botão Remover chave
+- botão Testar conexão
+- exibir:
+  - configurado
+  - não configurado
+
+B) Análise da reunião
+- select Gemini/Groq
+- textarea transcrição
+- botão Analisar reunião
+- exibir:
+  - resumo
+  - tópicos
+  - ações
+  - responsáveis
+  - decisões
+  - pendências
+  - tipo reunião
+  - confiança
+
+15. Melhorar UX:
+- interface moderna;
+- cards;
+- loading;
+- mensagens de erro amigáveis;
+- responsividade;
+- aparência profissional.
+
+16. Segurança:
+- nunca retornar apiKey;
+- nunca logar apiKey;
+- mascarar visualmente a chave;
+- permitir substituição da chave;
+- remover chave permanentemente quando solicitado.
+
+17. Atualizar prompt da IA para:
+
+- resumo corporativo;
+- ações estruturadas;
+- decisões tomadas;
+- pendências;
+- responsáveis;
+- classificação automática da reunião;
+- consolidação de ações duplicadas;
+- resposta somente JSON válido.
+
+18. Atualizar testes automatizados:
+- salvar chave Gemini;
+- salvar chave Groq;
+- alterar chave;
+- remover chave;
+- testar conexão;
+- selecionar provider corretamente;
+- bloquear análise sem chave;
+- validar providers inválidos;
+- validar resposta IA;
+- garantir:
+  dotnet test EasyMeet.sln
+
+19. Atualizar:
+- README.md
+- docs/PRD.md
+- docs/VIABILIDADE.md
+- docs/ADR.md
+- docs/DIRETRIZES_IA.md
+- docs/prompts.md
+- PR.md
+
+20. Manter:
+- Clean Code
+- SOLID
+- async/await
+- DI
+- Swagger
+- GitHub Actions
+- arquitetura organizada
+
+21. Não implementar fallback local.
+Toda análise válida deve utilizar IA real.
+
+22. Toda a aplicação deve permanecer funcional com:
+- dotnet build EasyMeet.sln
+- dotnet test EasyMeet.sln
+- dotnet run --project .\src\EasyMeet.Api\EasyMeet.Api.csproj
 
 ## 12. Revisão final da atividade
 ### Prompt
