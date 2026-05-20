@@ -1,0 +1,128 @@
+:root {
+  --bg: #f4f7fb;
+  --card: #ffffff;
+  --txt: #1d2a3a;
+  --primary: #0b6bcb;
+  --error: #dc2626;
+  --label: #475569;
+}
+
+body {
+  margin: 0;
+  font-family: Segoe UI, sans-serif;
+  background: var(--bg);
+  color: var(--txt);
+}
+
+main {
+  max-width: 900px;
+  margin: 40px auto;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .08);
+  position: relative;
+}
+
+h1 {
+  margin-top: 0;
+}
+
+label {
+  display: block;
+  margin-top: 16px;
+  font-weight: 600;
+  color: var(--label);
+  font-size: 0.9rem;
+}
+
+textarea,
+input,
+button {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  margin-top: 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-family: inherit;
+}
+
+textarea:focus,
+input:focus {
+  outline: 2px solid var(--primary);
+  border-color: transparent;
+}
+
+button {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 20px;
+  font-size: 1rem;
+  transition: background 0.2s;
+}
+
+button:hover {
+  background: #0958a8;
+}
+
+button:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+.result-section {
+  margin-top: 30px;
+  border-top: 2px solid #e2e8f0;
+  padding-top: 20px;
+  display: none;
+}
+
+.result-field {
+  margin-bottom: 15px;
+}
+
+pre {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 12px;
+  overflow: auto;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  min-height: 50px;
+  margin-top: 6px;
+}
+
+/* Toast/Dialog estilo */
+#toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--error);
+  color: white;
+  padding: 16px 32px;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+  display: none;
+  animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  max-width: 90%;
+  text-align: center;
+  font-weight: bold;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translate(-50%, -100%);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}

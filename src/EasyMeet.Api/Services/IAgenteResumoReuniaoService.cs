@@ -1,3 +1,5 @@
+using EasyMeet.Api.Models;
+
 namespace EasyMeet.Api.Services;
 
 /// <summary>
@@ -6,7 +8,7 @@ namespace EasyMeet.Api.Services;
 public interface IAgenteResumoReuniaoService
 {
     /// <summary>
-    /// Analisa o texto da reunião e retorna o resumo em formato de texto.
+    /// Analisa o texto da reunião e retorna o resultado estruturado.
     /// </summary>
-    Task<string> ResumirAsync(string texto, CancellationToken cancellationToken = default);
+    Task<ResumoReuniaoResponse> ResumirAsync(string texto, CancellationToken cancellationToken = default);
 }

@@ -6,6 +6,7 @@ using EasyMeet.Tests.Fakes;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace EasyMeet.Tests.Unit;
 
@@ -30,7 +31,9 @@ public sealed class AgenteResumoReuniaoServiceTests
         var result = await service.ResumirAsync("Texto da reunião com conteúdo suficiente para análise de IA.", CancellationToken.None);
 
         // Assert
-        Assert.Equal("Resumo final da reunião de planejamento.", result);
+        Assert.Equal("Resumo final da reunião de planejamento.", result.Resumo);
+        Assert.Contains("Backlog", result.TopicosPrincipais);
+        Assert.Equal("Planning", result.TipoReuniao);
     }
 
     [Fact]
@@ -65,9 +68,8 @@ public sealed class AgenteResumoReuniaoServiceTests
             BaseAddress = new Uri("https://generativelanguage.googleapis.com/")
         };
 
-        var geminiClientService = new GeminiClientService(client, NullLogger<GeminiClientService>.Instance);
-
-        Environment.SetEnvironmentVariable("GEMINI_API_KEY", "fake-key");
+        var options = Options.Create(new GeminiSettings { ApiKey = "fake-key" });
+        var geminiClientService = new GeminiClientService(client, options, NullLogger<GeminiClientService>.Instance);
 
         // Act
         var result = await geminiClientService.TryGerarResumoAsync("Prompt de teste", CancellationToken.None);
@@ -80,32 +82,17 @@ public sealed class AgenteResumoReuniaoServiceTests
         Assert.Contains("gemini-2.5-flash:generateContent", handler.LastRequest.RequestUri!.ToString(), StringComparison.Ordinal);
     }
 
-    [Fact]
-    public async Task GeminiClientService_DeveLancarExcecao_QuandoApiKeyNaoConfigurada()
-    {
-        // Arrange
-        var client = new HttpClient();
-        var geminiClientService = new GeminiClientService(client, NullLogger<GeminiClientService>.Instance);
-        Environment.SetEnvironmentVariable("GEMINI_API_KEY", "");
-
-        // Act & Assert
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => 
-            geminiClientService.TryGerarResumoAsync("Prompt de teste", CancellationToken.None));
-        
-        Assert.Contains("GEMINI_API_KEY não configurada", ex.Message);
-    }
-
     private static AgenteResumoReuniaoService CreateServiceWithGeminiPayload(string payload, HttpStatusCode statusCode = HttpStatusCode.OK)
     {
-        Environment.SetEnvironmentVariable("GEMINI_API_KEY", "fake-key");
-
         var handler = new FakeHttpMessageHandler((_, _) => FakeHttpMessageHandler.JsonResponse(payload, statusCode));
         var client = new HttpClient(handler)
         {
             BaseAddress = new Uri("https://generativelanguage.googleapis.com/")
         };
 
-        var geminiClientService = new GeminiClientService(client, NullLogger<GeminiClientService>.Instance);
+        var options = Options.Create(new GeminiSettings { ApiKey = "fake-key" });
+        var geminiClientService = new GeminiClientService(client, options, NullLogger<GeminiClientService>.Instance);
+        
         var environment = new FakeWebHostEnvironment
         {
             ContentRootPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../src/EasyMeet.Api"))

@@ -1,4 +1,4 @@
-﻿# EasyMeet
+# EasyMeet
 
 ## Descrição do projeto
 EasyMeet é uma API REST desenvolvida em ASP.NET Core .NET 9 para analisar transcrições de reuniões e transformar conteúdo textual em informações estruturadas para apoio à tomada de decisão.
@@ -23,7 +23,11 @@ Responsabilidades da IA:
 - classificar o tipo da reunião;
 - estimar nível de confiança da análise.
 
-Quando a IA falha, a API usa fallback local e mantém o contrato de saída.
+## Tratamento de Erros e Transparência
+Diferente de abordagens que ocultam falhas, o EasyMeet prioriza a transparência. Quando ocorre um erro na integração com a IA (ex: timeout, chave inválida ou resposta fora do padrão):
+- O sistema interrompe o fluxo de fallback automático silencioso.
+- Uma exceção detalhada é propagada até a interface.
+- O usuário visualiza o erro específico através de uma caixa de diálogo suspensa (toast), permitindo o diagnóstico imediato do problema.
 
 ## Tecnologias utilizadas
 - .NET 9
@@ -32,13 +36,14 @@ Quando a IA falha, a API usa fallback local e mantém o contrato de saída.
 - xUnit
 - HttpClientFactory
 - Google Gemini API (`gemini-2.5-flash`)
-- Mermaid
+- Vanilla HTML/JS/CSS (Frontend organizado e desacoplado)
 
 ## Arquitetura
 - `Controllers`: entrada HTTP e validações.
-- `Services`: regra de negócio, agente de IA e integração Gemini.
+- `Services`: regra de negócio, agente de IA e integração Gemini (configurada via `IOptions`).
 - `Prompts`: engenharia de prompt e template.
 - `Models`: contratos de entrada/saída.
+- `wwwroot`: Interface web com separação clara de responsabilidades (HTML, CSS e JS em arquivos distintos).
 
 ## Estrutura de pastas
 ```text
@@ -50,17 +55,14 @@ EasyMeet/
 │       ├── Models/
 │       ├── Prompts/
 │       ├── wwwroot/
+│       │   ├── css/        # Estilos desacoplados
+│       │   ├── js/         # Lógica de interface desacoplada
+│       │   └── index.html  # Estrutura HTML limpa
 │       └── Program.cs
 ├── tests/
 │   └── EasyMeet.Tests/
 ├── docs/
-│   ├── PRD.md
-│   ├── VIABILIDADE.md
-│   ├── BACKLOG.md
-│   ├── UML.md
-│   ├── ADR.md
-│   ├── DIRETRIZES_IA.md
-│   └── prompts.md
+│   └── ... (Documentação técnica)
 └── .github/
 ```
 
@@ -68,10 +70,10 @@ EasyMeet/
 1. Cliente envia `POST /api/reunioes/resumir` com `texto`.
 2. Controller valida entrada.
 3. Serviço monta prompt estruturado.
-4. Serviço chama Gemini 2.5 Flash.
+4. Serviço chama Gemini 2.5 Flash utilizando a API Key configurada no `appsettings.json`.
 5. API valida JSON de retorno da IA.
-6. Em sucesso: `modoExecucao = "gemini"`.
-7. Em falha: fallback local com `modoExecucao = "fallback_local"`.
+6. **Sucesso**: Retorna o JSON estruturado e a interface distribui os dados em campos específicos.
+7. **Falha**: Retorna o erro específico (400, 504, 500) e a interface exibe o alerta (Toast) para o usuário.
 
 ## Fluxograma (Mermaid)
 ```mermaid
@@ -80,10 +82,10 @@ flowchart TD
     B -- Não --> C[400 BadRequest]
     B -- Sim --> D[Montar prompt]
     D --> E[Chamar Gemini]
-    E --> F{JSON válido?}
-    F -- Sim --> G[200 OK - modo gemini]
-    F -- Não --> H[Fallback local]
-    H --> I[200 OK - modo fallback_local]
+    E --> F{Sucesso IA?}
+    F -- Sim --> G[200 OK - JSON Estruturado]
+    F -- Não --> H[Propagar Erro Detalhado]
+    H --> I[Exibir Toast de Erro na UI]
 ```
 
 ## Como executar
@@ -94,18 +96,25 @@ dotnet run --project .\src\EasyMeet.Api\EasyMeet.Api.csproj
 ```
 
 ## Como configurar `GEMINI_API_KEY`
-```powershell
-$env:GEMINI_API_KEY="SUA_CHAVE_AQUI"
+A chave deve ser configurada no arquivo `src/EasyMeet.Api/appsettings.json` (ou `appsettings.Development.json`):
+
+```json
+{
+  "Gemini": {
+    "ApiKey": "SUA_CHAVE_AQUI",
+    "ModoExecucao": "Producao"
+  }
+}
 ```
 
 ## Como rodar testes
 ```powershell
-dotnet test .\tests\EasyMeet.Tests\EasyMeet.Tests.csproj
+dotnet test .\EasyMeet.sln
 ```
 
 ## Interface web
-- Acesse `/` para usar a interface web simples de teste.
-- Acesse `/swagger` para testar via OpenAPI.
+- Acesse `/` para usar a interface web. Agora com campos detalhados para Tópicos, Ações, Responsáveis e Nível de Confiança.
+- Erros de integração são exibidos no topo da tela em um alerta vermelho.
 
 ## Exemplo de request
 ```json
@@ -114,36 +123,24 @@ dotnet test .\tests\EasyMeet.Tests\EasyMeet.Tests.csproj
 }
 ```
 
-## Exemplo de response
+## Exemplo de response (Sucesso)
 ```json
 {
-  "resumo": "",
-  "topicosPrincipais": [],
-  "acoes": [],
-  "responsaveis": [],
-  "tipoReuniao": "",
-  "nivelConfianca": 0.0,
+  "resumo": "O time revisou entregas e definiu prazos.",
+  "topicosPrincipais": ["Status das entregas", "Cronograma"],
+  "acoes": ["Atualizar Jira"],
+  "responsaveis": ["Time de dev"],
+  "tipoReuniao": "Status",
+  "nivelConfianca": 0.95,
   "geradoPorIA": true,
   "modoExecucao": "gemini"
 }
 ```
 
 ## Decisões técnicas
-- Integração Gemini com `HttpClientFactory`.
-- Fallback local obrigatório.
-- Validação rígida do JSON da IA.
-- Testes automatizados sem chamadas externas reais.
-
-## Limitações conhecidas
-- Fallback local é simplificado.
-- Sem persistência de dados nesta versão.
-- Sem autenticação/autorização nesta etapa acadêmica.
-
-## Melhorias futuras
-- Persistência em banco.
-- Dashboard de métricas.
-- Upload de áudio com transcrição.
-- Testes E2E.
+- **Transparência de Erros**: Remoção do fallback silencioso em favor de mensagens explícitas para o usuário final.
+- **Configuração Forte**: Uso de `IOptions<GeminiSettings>` para leitura centralizada de configurações.
+- **Organização Frontend**: Separação de arquivos para melhorar manutenibilidade e performance.
 
 ## Referências de documentação
 - [PRD](docs/PRD.md)
@@ -153,4 +150,3 @@ dotnet test .\tests\EasyMeet.Tests\EasyMeet.Tests.csproj
 - [ADR](docs/ADR.md)
 - [Diretrizes de IA](docs/DIRETRIZES_IA.md)
 - [Prompts](docs/prompts.md)
-
