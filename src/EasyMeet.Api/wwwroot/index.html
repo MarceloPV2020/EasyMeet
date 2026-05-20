@@ -303,6 +303,21 @@
       padding: 9px 12px;
     }
 
+    .history-filters {
+      display: grid;
+      grid-template-columns: minmax(220px, 2fr) minmax(150px, 1fr) minmax(140px, 1fr) auto;
+      gap: 10px;
+      align-items: end;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fbfe;
+      padding: 12px;
+    }
+
+    .history-filters button {
+      min-width: 96px;
+    }
+
     .history-list {
       display: grid;
       gap: 10px;
@@ -339,6 +354,34 @@
       margin: 0;
       white-space: pre-wrap;
       line-height: 1.45;
+    }
+
+    .history-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 8px 0 10px;
+    }
+
+    .history-details-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .history-section {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fff;
+      padding: 10px;
+    }
+
+    .history-section h4 {
+      margin: 0 0 6px;
+      color: #334155;
+      font-size: 12px;
+      text-transform: uppercase;
     }
 
     .history-item details {
@@ -383,6 +426,8 @@
       .config-drawer { width: 100vw; }
       .config-drawer .panel-body { grid-template-columns: 1fr; }
       .config-drawer .wide { grid-column: auto; }
+      .history-filters { grid-template-columns: 1fr; }
+      .history-details-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -502,6 +547,7 @@
             <article class="card"><h3>Responsáveis</h3><ul id="responsaveis"></ul></article>
             <article class="card"><h3>Decisões</h3><ul id="decisoes"></ul></article>
             <article class="card"><h3>Pendências</h3><ul id="pendencias"></ul></article>
+            <article class="card"><h3>Data da reunião</h3><p id="dataReuniao" class="value muted">-</p></article>
             <article class="card"><h3>Tipo de reunião</h3><p id="tipoReuniao" class="value muted">-</p></article>
             <article class="card"><h3>Confiança</h3><p id="confianca" class="value muted">-</p></article>
           </section>
@@ -520,6 +566,23 @@
             <span id="historicoState" class="chip info">Pronto</span>
             <button id="refreshHistorico" type="button" class="alt">Atualizar</button>
           </div>
+          <div class="history-filters" aria-label="Filtros do histórico">
+            <div>
+              <label for="historicoFiltroTexto">Buscar</label>
+              <input id="historicoFiltroTexto" type="search" placeholder="Resumo, ação, responsável ou transcrição" />
+            </div>
+            <div>
+              <label for="historicoFiltroData">Data</label>
+              <input id="historicoFiltroData" type="date" />
+            </div>
+            <div>
+              <label for="historicoFiltroTipo">Tipo</label>
+              <select id="historicoFiltroTipo">
+                <option value="">Todos</option>
+              </select>
+            </div>
+            <button id="limparFiltrosHistorico" type="button" class="alt">Limpar</button>
+          </div>
           <div id="historicoList" class="history-list"></div>
         </div>
       </section>
@@ -535,6 +598,10 @@
     const historicoStateEl = document.getElementById("historicoState");
     const historicoListEl = document.getElementById("historicoList");
     const refreshHistoricoBtn = document.getElementById("refreshHistorico");
+    const historicoFiltroTextoEl = document.getElementById("historicoFiltroTexto");
+    const historicoFiltroDataEl = document.getElementById("historicoFiltroData");
+    const historicoFiltroTipoEl = document.getElementById("historicoFiltroTipo");
+    const limparFiltrosHistoricoBtn = document.getElementById("limparFiltrosHistorico");
     const toggleConfigBtn = document.getElementById("toggleConfig");
     const configDrawerEl = document.getElementById("configDrawer");
     const configBackdropEl = document.getElementById("configBackdrop");
@@ -557,6 +624,7 @@
     const responsaveisEl = document.getElementById("responsaveis");
     const decisoesEl = document.getElementById("decisoes");
     const pendenciasEl = document.getElementById("pendencias");
+    const dataReuniaoEl = document.getElementById("dataReuniao");
     const tipoReuniaoEl = document.getElementById("tipoReuniao");
     const confiancaEl = document.getElementById("confianca");
 
@@ -627,6 +695,7 @@
     let providerStatus = {};
     let toastTimeout;
     let historicoCarregado = false;
+    let historicoOriginal = [];
     let analysisStatus = { text: "Pronto", className: "chip info" };
 
     function syncDrawerState(open) {
@@ -674,6 +743,158 @@
         : "Não informado";
     }
 
+    function formatDataReuniao(value) {
+      if (!value) {
+        return "Não identificada";
+      }
+
+      const parts = value.toString().split("-");
+      return parts.length === 3
+        ? `${parts[2]}/${parts[1]}/${parts[0]}`
+        : value;
+    }
+
+    function createHistorySection(title, content) {
+      const section = document.createElement("section");
+      section.className = "history-section";
+
+      const heading = document.createElement("h4");
+      heading.textContent = title;
+
+      section.appendChild(heading);
+
+      if (content instanceof Node) {
+        section.appendChild(content);
+      } else {
+        const text = document.createElement("p");
+        text.className = "value";
+        text.textContent = content || "Não identificado";
+        section.appendChild(text);
+      }
+
+      return section;
+    }
+
+    function createHistoryList(items) {
+      const list = document.createElement("ul");
+      if (!Array.isArray(items) || items.length === 0) {
+        const empty = document.createElement("li");
+        empty.className = "muted";
+        empty.textContent = "Não identificado";
+        list.appendChild(empty);
+        return list;
+      }
+
+      items.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        list.appendChild(li);
+      });
+      return list;
+    }
+
+    function createHistoryActions(actions) {
+      const list = document.createElement("ul");
+      list.className = "actions-list";
+      if (!Array.isArray(actions) || actions.length === 0) {
+        const empty = document.createElement("li");
+        empty.className = "muted";
+        empty.textContent = "Não identificado";
+        list.appendChild(empty);
+        return list;
+      }
+
+      actions.forEach(item => {
+        const li = document.createElement("li");
+        li.className = "action-item";
+        const descricao = item?.descricao || "Sem descrição";
+        const responsavel = item?.responsavel || "Não identificado";
+        const prazo = item?.prazo || "";
+        const meta = prazo ? `Responsável: ${responsavel} | Prazo: ${prazo}` : `Responsável: ${responsavel}`;
+        li.textContent = descricao;
+
+        const metaEl = document.createElement("div");
+        metaEl.className = "action-meta";
+        metaEl.textContent = meta;
+        li.appendChild(metaEl);
+        list.appendChild(li);
+      });
+
+      return list;
+    }
+
+    function normalizeText(value) {
+      return (value || "").toString().toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    }
+
+    function uniqueValues(items, selector) {
+      return [...new Set(items.map(selector).filter(value => value && value.toString().trim()))]
+        .sort((a, b) => a.localeCompare(b, "pt-BR"));
+    }
+
+    function populateHistoryFilterOptions(reunioes) {
+      const selectedTipo = historicoFiltroTipoEl.value;
+
+      historicoFiltroTipoEl.innerHTML = '<option value="">Todos</option>';
+      uniqueValues(reunioes, item => item.tipoReuniao).forEach(value => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = value;
+        historicoFiltroTipoEl.appendChild(option);
+      });
+
+      if (Array.from(historicoFiltroTipoEl.options).some(option => option.value === selectedTipo)) {
+        historicoFiltroTipoEl.value = selectedTipo;
+      }
+    }
+
+    function buildHistorySearchText(reuniao) {
+      const acoes = Array.isArray(reuniao.acoes)
+        ? reuniao.acoes.map(acao => `${acao?.descricao || ""} ${acao?.responsavel || ""} ${acao?.prazo || ""}`).join(" ")
+        : "";
+
+      return normalizeText([
+        reuniao.resumo,
+        reuniao.transcricao,
+        reuniao.dataReuniao,
+        reuniao.tipoReuniao,
+        reuniao.modoExecucao,
+        ...(reuniao.topicosPrincipais || []),
+        ...(reuniao.responsaveis || []),
+        ...(reuniao.decisoes || []),
+        ...(reuniao.pendencias || []),
+        acoes
+      ].join(" "));
+    }
+
+    function filtrarHistorico() {
+      const termo = normalizeText(historicoFiltroTextoEl.value);
+      const data = historicoFiltroDataEl.value;
+      const tipo = historicoFiltroTipoEl.value;
+
+      return historicoOriginal.filter(reuniao => {
+        const matchesText = !termo || buildHistorySearchText(reuniao).includes(termo);
+        const matchesData = !data || reuniao.dataReuniao === data;
+        const matchesTipo = !tipo || reuniao.tipoReuniao === tipo;
+
+        return matchesText && matchesData && matchesTipo;
+      });
+    }
+
+    function aplicarFiltrosHistorico() {
+      const filtradas = filtrarHistorico();
+      renderHistorico(filtradas);
+      historicoStateEl.textContent = `${filtradas.length} de ${historicoOriginal.length} registros`;
+      historicoStateEl.className = "chip ok";
+    }
+
+    function limparFiltrosHistorico() {
+      historicoFiltroTextoEl.value = "";
+      historicoFiltroDataEl.value = "";
+      historicoFiltroTipoEl.value = "";
+      aplicarFiltrosHistorico();
+    }
+
     function renderHistorico(reunioes) {
       historicoListEl.innerHTML = "";
 
@@ -704,17 +925,53 @@
         summary.className = "history-summary";
         summary.textContent = reuniao.resumo || "Resumo não informado";
 
-        const details = document.createElement("details");
+        const meta = document.createElement("div");
+        meta.className = "history-meta";
+
+        const tipoChip = document.createElement("span");
+        tipoChip.className = "chip info";
+        tipoChip.textContent = reuniao.tipoReuniao || "Tipo não identificado";
+
+        const dataChip = document.createElement("span");
+        dataChip.className = "chip info";
+        dataChip.textContent = `Data: ${formatDataReuniao(reuniao.dataReuniao)}`;
+
+        const iaChip = document.createElement("span");
+        iaChip.className = "chip info";
+        iaChip.textContent = reuniao.modoExecucao || "IA não identificada";
+
+        const origemChip = document.createElement("span");
+        origemChip.className = reuniao.geradoPorIA ? "chip ok" : "chip bad";
+        origemChip.textContent = reuniao.geradoPorIA ? "Gerado por IA" : "Origem não identificada";
+
+        meta.append(dataChip, tipoChip, iaChip, origemChip);
+
+        const analysisDetails = document.createElement("details");
+        const analysisSummary = document.createElement("summary");
+        analysisSummary.textContent = "Ver análise completa";
+
+        const detailsGrid = document.createElement("div");
+        detailsGrid.className = "history-details-grid";
+        detailsGrid.append(
+          createHistorySection("Tópicos", createHistoryList(reuniao.topicosPrincipais)),
+          createHistorySection("Ações", createHistoryActions(reuniao.acoes)),
+          createHistorySection("Responsáveis", createHistoryList(reuniao.responsaveis)),
+          createHistorySection("Decisões", createHistoryList(reuniao.decisoes)),
+          createHistorySection("Pendências", createHistoryList(reuniao.pendencias))
+        );
+        analysisDetails.append(analysisSummary, detailsGrid);
+
+        const transcriptionDetails = document.createElement("details");
         const detailsSummary = document.createElement("summary");
-        detailsSummary.textContent = "Transcrição";
+        detailsSummary.textContent = "Ver transcrição";
 
         const transcription = document.createElement("p");
         transcription.className = "history-transcription";
         transcription.textContent = reuniao.transcricao || "Transcrição não informada";
 
         head.append(title, confidence);
-        details.append(detailsSummary, transcription);
-        item.append(head, summary, details);
+        transcriptionDetails.append(detailsSummary, transcription);
+        item.append(head, summary, meta, analysisDetails, transcriptionDetails);
         historicoListEl.appendChild(item);
       });
     }
@@ -732,14 +989,15 @@
         }
 
         const reunioes = await resp.json();
-        renderHistorico(reunioes);
-        historicoStateEl.textContent = `${Array.isArray(reunioes) ? reunioes.length : 0} registros`;
-        historicoStateEl.className = "chip ok";
+        historicoOriginal = Array.isArray(reunioes) ? reunioes : [];
+        populateHistoryFilterOptions(historicoOriginal);
+        aplicarFiltrosHistorico();
         historicoCarregado = true;
       } catch (err) {
         historicoStateEl.textContent = "Erro";
         historicoStateEl.className = "chip bad";
         historicoCarregado = false;
+        historicoOriginal = [];
         historicoListEl.innerHTML = "";
         const error = document.createElement("p");
         error.className = "muted";
@@ -1003,6 +1261,8 @@
       renderList(responsaveisEl, []);
       renderList(decisoesEl, []);
       renderList(pendenciasEl, []);
+      dataReuniaoEl.textContent = "-";
+      dataReuniaoEl.className = "value muted";
       tipoReuniaoEl.textContent = "-";
       tipoReuniaoEl.className = "value muted";
       confiancaEl.textContent = "-";
@@ -1168,6 +1428,8 @@
         renderList(responsaveisEl, result.responsaveis);
         renderList(decisoesEl, result.decisoes);
         renderList(pendenciasEl, result.pendencias);
+        dataReuniaoEl.textContent = formatDataReuniao(result.dataReuniao);
+        dataReuniaoEl.className = "value";
         tipoReuniaoEl.textContent = result.tipoReuniao || "Desconhecida";
         tipoReuniaoEl.className = "value";
         confiancaEl.textContent = formatConfianca(result.nivelConfianca);
@@ -1197,6 +1459,10 @@
     tabAnaliseBtn.addEventListener("click", () => setActiveTab("analise"));
     tabHistoricoBtn.addEventListener("click", () => setActiveTab("historico"));
     refreshHistoricoBtn.addEventListener("click", () => fetchHistorico());
+    historicoFiltroTextoEl.addEventListener("input", aplicarFiltrosHistorico);
+    historicoFiltroDataEl.addEventListener("change", aplicarFiltrosHistorico);
+    historicoFiltroTipoEl.addEventListener("change", aplicarFiltrosHistorico);
+    limparFiltrosHistoricoBtn.addEventListener("click", limparFiltrosHistorico);
     providerConfigEl.addEventListener("change", updateProviderStatusChip);
     providerConfigEl.addEventListener("change", () => saveLastProvider(toApiProvider(providerConfigEl.value)));
     toggleConfigBtn.addEventListener("click", toggleConfigDrawer);

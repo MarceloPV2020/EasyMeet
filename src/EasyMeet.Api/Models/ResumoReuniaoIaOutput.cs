@@ -36,6 +36,11 @@ public sealed class ResumoReuniaoIaOutput
     public IReadOnlyList<string> Pendencias { get; init; } = [];
 
     /// <summary>
+    /// Data da reunião no formato ISO 8601 (AAAA-MM-DD), quando identificada.
+    /// </summary>
+    public string DataReuniao { get; init; } = string.Empty;
+
+    /// <summary>
     /// Classificação do tipo de reunião.
     /// </summary>
     public string TipoReuniao { get; init; } = "Unknown";

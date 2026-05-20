@@ -62,9 +62,18 @@ public sealed class ReunioesController(
             {
                 Transcricao = texto,
                 Resumo = response.Resumo,
+                TopicosPrincipais = response.TopicosPrincipais,
+                Acoes = response.Acoes,
+                Responsaveis = response.Responsaveis,
+                Decisoes = response.Decisoes,
+                Pendencias = response.Pendencias,
+                DataReuniao = response.DataReuniao,
+                TipoReuniao = response.TipoReuniao,
                 Confianca = double.IsFinite(response.NivelConfianca)
                     ? Convert.ToDecimal(response.NivelConfianca)
-                    : 0m
+                    : 0m,
+                GeradoPorIA = response.GeradoPorIA,
+                ModoExecucao = response.ModoExecucao
             }, cancellationToken);
 
             return Ok(response);

@@ -11,6 +11,7 @@ public sealed class ResumoReuniaoResponse
     public IReadOnlyList<string> Responsaveis { get; init; } = [];
     public IReadOnlyList<string> Decisoes { get; init; } = [];
     public IReadOnlyList<string> Pendencias { get; init; } = [];
+    public string DataReuniao { get; init; } = string.Empty;
     public string TipoReuniao { get; init; } = string.Empty;
     public double NivelConfianca { get; init; }
     public bool GeradoPorIA { get; init; }

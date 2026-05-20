@@ -49,6 +49,7 @@ public sealed class PromptResumoReuniaoBuilder(ILogger<PromptResumoReuniaoBuilde
             responsaveis = Array.Empty<string>(),
             decisoes = Array.Empty<string>(),
             pendencias = Array.Empty<string>(),
+            dataReuniao = string.Empty,
             tipoReuniao = "Desconhecida",
             nivelConfianca = 0.0
         });

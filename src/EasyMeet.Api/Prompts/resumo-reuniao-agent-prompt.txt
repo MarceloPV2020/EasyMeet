@@ -17,6 +17,7 @@ A resposta DEVE ser EXCLUSIVAMENTE um JSON válido no formato:
   "responsaveis": [],
   "decisoesTomadas": [],
   "pendencias": [],
+  "dataReuniao": "",
   "tipoReuniao": "",
   "nivelConfianca": 0.0
 }
@@ -43,7 +44,12 @@ Regras obrigatórias:
 6) Se não houver prazo identificado:
 - use string vazia "".
 
-7) "tipoReuniao" deve usar APENAS um destes valores:
+7) "dataReuniao" deve representar a data em que a reuniao ocorreu:
+- use o formato "AAAA-MM-DD" quando a data estiver clara na transcricao;
+- use string vazia "" quando nao houver data identificada com seguranca;
+- nao invente datas.
+
+8) "tipoReuniao" deve usar APENAS um destes valores:
 - "Diária"
 - "Planejamento"
 - "Status"
@@ -56,7 +62,7 @@ Regras obrigatórias:
 - "Alinhamento"
 - "Desconhecida"
 
-8) O resumo deve:
+9) O resumo deve:
 - ser claro;
 - profissional;
 - objetivo;

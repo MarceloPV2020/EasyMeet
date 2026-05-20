@@ -21,6 +21,7 @@ public sealed class MeetingAnalysisParserTests
           "decisoesTomadas":["Aprovar plano"],
           "pendencias":["Validar orçamento"],
           "tipoReuniao":"técnica",
+          "dataReuniao":"2026-05-20",
           "nivelConfianca":1.4
         }
         ```
@@ -35,6 +36,7 @@ public sealed class MeetingAnalysisParserTests
         Assert.Equal("Ana", result.Acoes[0].Responsavel);
         Assert.Equal("2026-06-01", result.Acoes[0].Prazo);
         Assert.Equal(["Aprovar plano"], result.Decisoes);
+        Assert.Equal("2026-05-20", result.DataReuniao);
         Assert.Equal("Tecnica", result.TipoReuniao);
         Assert.Equal(1d, result.NivelConfianca);
     }
@@ -63,6 +65,7 @@ public sealed class MeetingAnalysisParserTests
         Assert.Equal("Criar ata", result.Acoes[0].Descricao);
         Assert.Equal("Nao identificado", result.Acoes[0].Responsavel);
         Assert.Equal(["Manter escopo"], result.Decisoes);
+        Assert.Equal(string.Empty, result.DataReuniao);
         Assert.Equal("Planejamento", result.TipoReuniao);
         Assert.Equal(0.75d, result.NivelConfianca);
     }
@@ -87,4 +90,3 @@ public sealed class MeetingAnalysisParserTests
         Assert.Contains("extrair JSON", ex.Message);
     }
 }
-

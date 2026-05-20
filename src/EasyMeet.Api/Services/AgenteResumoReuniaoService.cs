@@ -34,6 +34,7 @@ public sealed class AgenteResumoReuniaoService(
             Responsaveis = parsed.Responsaveis,
             Decisoes = parsed.Decisoes,
             Pendencias = parsed.Pendencias,
+            DataReuniao = parsed.DataReuniao,
             TipoReuniao = parsed.TipoReuniao,
             NivelConfianca = parsed.NivelConfianca,
             GeradoPorIA = true,

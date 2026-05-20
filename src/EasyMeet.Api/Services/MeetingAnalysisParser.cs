@@ -38,6 +38,7 @@ public sealed class MeetingAnalysisParser
             Responsaveis = ExtractStringArray(root.GetProperty("responsaveis")),
             Decisoes = ExtractDecisoes(root),
             Pendencias = ExtractStringArray(root.GetProperty("pendencias")),
+            DataReuniao = ExtractDataReuniao(root),
             TipoReuniao = NormalizeTipoReuniao(tipoReuniao),
             NivelConfianca = nivelConfianca
         };
@@ -136,6 +137,27 @@ public sealed class MeetingAnalysisParser
         }
 
         return 0d;
+    }
+
+    private static string ExtractDataReuniao(JsonElement root)
+    {
+        if (!root.TryGetProperty("dataReuniao", out var node) || node.ValueKind != JsonValueKind.String)
+        {
+            return string.Empty;
+        }
+
+        var value = node.GetString()?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        if (DateOnly.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+        {
+            return date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        }
+
+        return value;
     }
 
     private static string? TryExtractJsonObject(string rawText)

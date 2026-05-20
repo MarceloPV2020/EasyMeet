@@ -68,6 +68,21 @@ public sealed class ReunioesControllerTests
         var controller = new ReunioesController(new FakeAgenteResumoReuniaoService(new ResumoReuniaoResponse
         {
             Resumo = "Resumo persistido",
+            TopicosPrincipais = ["Topico persistido"],
+            Acoes =
+            [
+                new AcaoReuniaoItem
+                {
+                    Descricao = "Acao persistida",
+                    Responsavel = "Pessoa persistida",
+                    Prazo = "2026-06-02"
+                }
+            ],
+            Responsaveis = ["Pessoa persistida"],
+            Decisoes = ["Decisao persistida"],
+            Pendencias = ["Pendencia persistida"],
+            DataReuniao = "2026-05-20",
+            TipoReuniao = "Status",
             NivelConfianca = 0.82,
             GeradoPorIA = true,
             ModoExecucao = "Gemini"
@@ -83,7 +98,19 @@ public sealed class ReunioesControllerTests
         var reuniao = Assert.Single(repository.Reunioes);
         Assert.Equal(request.Transcricao, reuniao.Transcricao);
         Assert.Equal("Resumo persistido", reuniao.Resumo);
+        Assert.Equal(["Topico persistido"], reuniao.TopicosPrincipais);
+        var acao = Assert.Single(reuniao.Acoes);
+        Assert.Equal("Acao persistida", acao.Descricao);
+        Assert.Equal("Pessoa persistida", acao.Responsavel);
+        Assert.Equal("2026-06-02", acao.Prazo);
+        Assert.Equal(["Pessoa persistida"], reuniao.Responsaveis);
+        Assert.Equal(["Decisao persistida"], reuniao.Decisoes);
+        Assert.Equal(["Pendencia persistida"], reuniao.Pendencias);
+        Assert.Equal("2026-05-20", reuniao.DataReuniao);
+        Assert.Equal("Status", reuniao.TipoReuniao);
         Assert.Equal(0.82m, reuniao.Confianca);
+        Assert.True(reuniao.GeradoPorIA);
+        Assert.Equal("Gemini", reuniao.ModoExecucao);
     }
 
     [Fact]
@@ -175,7 +202,16 @@ public sealed class ReunioesControllerTests
                 Id = id,
                 Transcricao = reuniao.Transcricao,
                 Resumo = reuniao.Resumo,
-                Confianca = reuniao.Confianca
+                TopicosPrincipais = reuniao.TopicosPrincipais,
+                Acoes = reuniao.Acoes,
+                Responsaveis = reuniao.Responsaveis,
+                Decisoes = reuniao.Decisoes,
+                Pendencias = reuniao.Pendencias,
+                DataReuniao = reuniao.DataReuniao,
+                TipoReuniao = reuniao.TipoReuniao,
+                Confianca = reuniao.Confianca,
+                GeradoPorIA = reuniao.GeradoPorIA,
+                ModoExecucao = reuniao.ModoExecucao
             });
             return Task.FromResult(id);
         }
