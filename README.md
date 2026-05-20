@@ -29,7 +29,7 @@ EasyMeet e uma aplicacao local Windows para analise inteligente de reunioes com 
   - `EasyMeet:Groq`
 
 ## Endpoints
-- `POST /api/reunioes/resumir`
+- `POST /api/reunioes/analisar`
 - `GET /api/ia/provedores`
 - `GET /api/ia/credenciais/status`
 - `POST /api/ia/credenciais`

@@ -99,7 +99,7 @@ sequenceDiagram
     participant AI as IGenerativeAIClient
     participant Parser as MeetingAnalysisParser
 
-    UI->>RC: POST /api/reunioes/resumir
+    UI->>RC: POST /api/reunioes/analisar
     RC->>ARS: ResumirAsync(transcricao, provedorIA, configuracaoIA)
     ARS->>KS: GetApiKeyAsync(provedorIA)
     KS-->>ARS: apiKey ou null

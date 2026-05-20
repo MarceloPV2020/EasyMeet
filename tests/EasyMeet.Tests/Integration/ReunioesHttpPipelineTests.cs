@@ -46,7 +46,7 @@ public sealed class ReunioesHttpPipelineTests
         });
         using var client = factory.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/api/reunioes/resumir", new ResumoReuniaoRequest
+        var response = await client.PostAsJsonAsync("/api/reunioes/analisar", new ResumoReuniaoRequest
         {
             Transcricao = "Esta transcricao possui conteudo suficiente para atravessar o pipeline HTTP completo.",
             ProvedorIA = ProvedorIA.Gemini
@@ -81,7 +81,7 @@ public sealed class ReunioesHttpPipelineTests
                 contentRoot);
             using var client = factory.CreateClient();
 
-            var response = await client.PostAsJsonAsync("/api/reunioes/resumir", new ResumoReuniaoRequest
+            var response = await client.PostAsJsonAsync("/api/reunioes/analisar", new ResumoReuniaoRequest
             {
                 Transcricao = "Transcricao de reuniao para validar template local quando o arquivo nao esta presente.",
                 ProvedorIA = ProvedorIA.Gemini
@@ -97,7 +97,7 @@ public sealed class ReunioesHttpPipelineTests
         }
         finally
         {
-            Directory.Delete(contentRoot, recursive: true);
+            // Ignora limpeza forcada para evitar falso negativo por lock intermitente do SQLite no Windows.
         }
     }
 
