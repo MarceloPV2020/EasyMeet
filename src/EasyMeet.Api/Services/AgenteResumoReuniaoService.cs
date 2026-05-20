@@ -4,7 +4,7 @@ using EasyMeet.Api.Prompts;
 namespace EasyMeet.Api.Services;
 
 /// <summary>
-/// Serviço de orquestração de resumo de reunião com IA.
+/// Servico de orquestracao de resumo de reuniao com IA.
 /// </summary>
 public sealed class AgenteResumoReuniaoService(
     PromptResumoReuniaoBuilder promptBuilder,
@@ -16,7 +16,6 @@ public sealed class AgenteResumoReuniaoService(
         var prompt = await promptBuilder.BuildAsync(texto, cancellationToken);
         var iaResult = await geminiClientService.TryGerarResumoAsync(prompt, cancellationToken);
 
-        // Se chegar aqui sem exceção, iaResult não será nulo devido às mudanças no GeminiClientService
         return new ResumoReuniaoResponse
         {
             Resumo = iaResult!.Resumo,

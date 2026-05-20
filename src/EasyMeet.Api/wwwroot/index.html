@@ -3,54 +3,303 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>EasyMeet - Interface Web</title>
-  <link rel="stylesheet" href="css/style.css">
+  <title>EasyMeet - Analise de Reunioes</title>
+  <style>
+    :root {
+      --page: #f3f6f8;
+      --surface: #ffffff;
+      --surface-soft: #f7fafc;
+      --ink: #17212f;
+      --muted: #607086;
+      --line: #d8e1ea;
+      --brand: #0f766e;
+      --brand-hover: #0b5f59;
+      --blue: #2563eb;
+      --amber: #b7791f;
+      --rose: #be123c;
+      --success-soft: #e8f6f3;
+      --blue-soft: #edf4ff;
+      --amber-soft: #fff7e8;
+      --rose-soft: #fff1f3;
+      --shadow: 0 14px 34px rgba(23, 33, 47, 0.10);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+      background:
+        linear-gradient(135deg, rgba(15, 118, 110, 0.08), transparent 36%),
+        linear-gradient(315deg, rgba(183, 121, 31, 0.08), transparent 30%),
+        var(--page);
+    }
+    .topbar {
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(10px);
+    }
+    .topbar-inner {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      width: 38px; height: 38px; border-radius: 8px; display: grid; place-items: center;
+      background: var(--brand); color: #fff; font-weight: 800;
+    }
+    h1 { margin: 0; font-size: 22px; line-height: 1.1; }
+    .subtitle { margin: 3px 0 0; color: var(--muted); font-size: 14px; }
+    .status-chip {
+      border: 1px solid #bee3db; background: var(--success-soft); color: #0b5f59;
+      border-radius: 999px; padding: 7px 11px; font-size: 13px; font-weight: 700;
+    }
+    .workspace {
+      max-width: 1600px;
+      min-height: calc(100vh - 78px);
+      margin: 0 auto;
+      padding: 22px 22px 28px;
+      display: grid;
+      grid-template-columns: minmax(360px, 0.9fr) minmax(520px, 1.4fr);
+      gap: 22px;
+      align-items: stretch;
+    }
+    .panel {
+      background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+      box-shadow: var(--shadow); display: flex; flex-direction: column; min-height: 0;
+    }
+    .panel-header { padding: 16px 18px; border-bottom: 1px solid var(--line); }
+    .panel-title { margin: 0; font-size: 17px; line-height: 1.2; }
+    .panel-note { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
+    .input-body { padding: 18px; display: flex; flex: 1; flex-direction: column; min-height: 0; }
+    label {
+      display: block; margin-bottom: 8px; font-size: 13px; font-weight: 800;
+      text-transform: uppercase; color: #3d4f63;
+    }
+    textarea {
+      width: 100%; min-height: 520px; flex: 1; border: 1px solid var(--line); border-radius: 8px;
+      padding: 14px; color: var(--ink); background: #fbfdff; font: inherit; font-size: 15px;
+      line-height: 1.5; resize: vertical; outline: none;
+      transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+    }
+    textarea:focus {
+      border-color: rgba(15, 118, 110, 0.7);
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.12);
+    }
+    button {
+      width: 100%; margin-top: 14px; border: none; border-radius: 8px; padding: 13px 16px;
+      background: var(--brand); color: #fff; font-weight: 800; font-size: 15px;
+      cursor: pointer; transition: background .2s ease, transform .2s ease;
+    }
+    button:hover { background: var(--brand-hover); }
+    button:active { transform: translateY(1px); }
+    button:disabled { background: #9bb5b2; cursor: not-allowed; transform: none; }
+    .summary { padding: 18px; border-bottom: 1px solid var(--line); flex: 0 0 auto; }
+    .summary-label { margin: 0 0 8px; color: var(--muted); font-size: 13px; font-weight: 800; text-transform: uppercase; }
+    .summary-text { margin: 0; min-height: 72px; white-space: pre-wrap; line-height: 1.55; font-size: 15px; }
+    .result-grid { padding: 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; flex: 1; }
+    .metric-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 0 18px 18px; }
+    .card { border: 1px solid var(--line); border-radius: 8px; background: var(--surface-soft); padding: 14px; min-height: 150px; }
+    .card h3 { margin: 0 0 10px; font-size: 14px; line-height: 1.2; }
+    .card.topic { background: var(--blue-soft); border-color: #c9dcff; }
+    .card.action { background: var(--amber-soft); border-color: #f2d6a1; }
+    .card.people { background: var(--rose-soft); border-color: #f9c6d0; }
+    ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+    li { position: relative; padding-left: 15px; color: #2e3f53; font-size: 14px; line-height: 1.35; }
+    li::before {
+      content: ""; position: absolute; left: 0; top: .55em; width: 6px; height: 6px;
+      border-radius: 999px; background: currentColor; opacity: .5;
+    }
+    .empty { color: #738398; font-style: italic; }
+    .empty::before { display: none; }
+    .metric { min-height: 96px; display: flex; flex-direction: column; justify-content: center; gap: 7px; }
+    .metric-label { color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; }
+    .badge {
+      align-self: flex-start; border-radius: 999px; padding: 8px 12px; background: var(--success-soft);
+      color: #0b5f59; font-size: 13px; font-weight: 800; text-transform: uppercase;
+    }
+    .confidence { font-size: 30px; line-height: 1; font-weight: 900; color: var(--blue); }
+    #toast {
+      position: fixed; top: 18px; left: 50%; z-index: 9999; display: none;
+      max-width: min(92vw, 680px); transform: translateX(-50%); border-radius: 8px;
+      padding: 12px 16px; background: #991b1b; color: #fff;
+      box-shadow: 0 14px 30px rgba(153, 27, 27, 0.24); text-align: center; font-weight: 700;
+    }
+    @media (max-width: 900px) {
+      .workspace { grid-template-columns: 1fr; min-height: auto; padding-top: 14px; }
+      textarea { min-height: 300px; }
+    }
+    @media (max-width: 620px) {
+      .topbar-inner { align-items: flex-start; flex-direction: column; }
+      .workspace { padding: 0 12px 18px; }
+      .result-grid, .metric-row { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-  <div id="toast">Erro ao processar requisição</div>
+  <div id="toast">Erro ao processar requisicao</div>
 
-  <main>
-    <h1>EasyMeet</h1>
-    <p>Interface web para resumo de reuniões via IA.</p>
-    
-    <label for="texto">Texto da reunião</label>
-    <textarea id="texto" rows="8" placeholder="Cole aqui a transcrição da reunião..."></textarea>
-    
-    <button id="enviar">Resumir Reunião</button>
-    
-    <div id="resultado" class="result-section">
-      <div class="result-field">
-        <label>Tipo de Reunião</label>
-        <input type="text" id="tipoReuniao" readonly />
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-mark">EM</div>
+        <div>
+          <h1>EasyMeet</h1>
+          <p class="subtitle">Analise de reunioes com saida estruturada</p>
+        </div>
       </div>
-
-      <div class="result-field">
-        <label>Nível de Confiança</label>
-        <input type="text" id="nivelConfianca" readonly />
-      </div>
-
-      <div class="result-field">
-        <label>Tópicos Principais</label>
-        <textarea id="topicos" rows="3" readonly></textarea>
-      </div>
-
-      <div class="result-field">
-        <label>Ações Identificadas</label>
-        <textarea id="acoes" rows="3" readonly></textarea>
-      </div>
-
-      <div class="result-field">
-        <label>Responsáveis</label>
-        <textarea id="responsaveis" rows="2" readonly></textarea>
-      </div>
-
-      <div class="result-field">
-        <label>Resumo Final</label>
-        <textarea id="saida" rows="6" readonly></textarea>
-      </div>
+      <div class="status-chip">IA de resumo</div>
     </div>
+  </header>
+
+  <main class="workspace">
+    <section class="panel">
+      <div class="panel-header">
+        <h2 class="panel-title">Transcricao</h2>
+        <p class="panel-note">Cole o conteudo da reuniao para gerar uma leitura executiva.</p>
+      </div>
+      <div class="input-body">
+        <label for="texto">Texto da reuniao</label>
+        <textarea id="texto" placeholder="Cole aqui a transcricao completa da reuniao..."></textarea>
+        <button id="enviar">Analisar reuniao</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2 class="panel-title">Resultado da analise</h2>
+        <p class="panel-note">Resumo, decisoes e responsaveis aparecem separados para consulta rapida.</p>
+      </div>
+      <div class="summary">
+        <p class="summary-label">Resumo</p>
+        <p id="resumo" class="summary-text empty">Aguardando requisicao...</p>
+      </div>
+
+      <section class="result-grid">
+        <article class="card topic"><h3>Topicos principais</h3><ul id="topicos"></ul></article>
+        <article class="card action"><h3>Acoes</h3><ul id="acoes"></ul></article>
+        <article class="card people"><h3>Responsaveis</h3><ul id="responsaveis"></ul></article>
+        <article class="card"><h3>Classificacao</h3><div id="tipo" class="badge">Desconhecida</div></article>
+      </section>
+
+      <section class="metric-row">
+        <article class="card metric"><span class="metric-label">Nivel de confianca</span><div id="confianca" class="confidence">-</div></article>
+        <article class="card metric"><span class="metric-label">Estado</span><div id="estado" class="badge">Pronto</div></article>
+      </section>
+    </section>
   </main>
 
-  <script src="js/script.js"></script>
+  <script>
+    const btn = document.getElementById("enviar");
+    const input = document.getElementById("texto");
+    const toast = document.getElementById("toast");
+    const resumoEl = document.getElementById("resumo");
+    const topicosEl = document.getElementById("topicos");
+    const acoesEl = document.getElementById("acoes");
+    const responsaveisEl = document.getElementById("responsaveis");
+    const tipoEl = document.getElementById("tipo");
+    const confiancaEl = document.getElementById("confianca");
+    const estadoEl = document.getElementById("estado");
+    let toastTimeout;
+
+    function showError(message) {
+      toast.textContent = message;
+      toast.style.display = "block";
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => { toast.style.display = "none"; }, 7000);
+    }
+
+    function renderList(el, values) {
+      el.innerHTML = "";
+      if (!Array.isArray(values) || values.length === 0) {
+        const li = document.createElement("li");
+        li.textContent = "Nao identificado";
+        li.className = "empty";
+        el.appendChild(li);
+        return;
+      }
+
+      values.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        el.appendChild(li);
+      });
+    }
+
+    function resetOutput() {
+      resumoEl.textContent = "Aguardando requisicao...";
+      resumoEl.className = "summary-text empty";
+      tipoEl.textContent = "Desconhecida";
+      confiancaEl.textContent = "-";
+      estadoEl.textContent = "Pronto";
+      renderList(topicosEl, []);
+      renderList(acoesEl, []);
+      renderList(responsaveisEl, []);
+    }
+
+    function renderOutput(data) {
+      resumoEl.textContent = data.resumo || "Nao informado";
+      resumoEl.className = "summary-text";
+      renderList(topicosEl, data.topicosPrincipais || []);
+      renderList(acoesEl, data.acoes || []);
+      renderList(responsaveisEl, data.responsaveis || []);
+      tipoEl.textContent = data.tipoReuniao || "Desconhecida";
+      const confidence = Number(data.nivelConfianca);
+      confiancaEl.textContent = Number.isFinite(confidence) ? `${Math.round(confidence * 100)}%` : "Nao informado";
+      estadoEl.textContent = "Concluido";
+    }
+
+    resetOutput();
+
+    btn.addEventListener("click", async () => {
+      const texto = input.value.trim();
+      if (!texto) {
+        showError("Por favor, insira o texto da reuniao.");
+        return;
+      }
+
+      btn.disabled = true;
+      toast.style.display = "none";
+      resumoEl.textContent = "Processando...";
+      resumoEl.className = "summary-text";
+      estadoEl.textContent = "Processando";
+
+      try {
+        const resp = await fetch("/api/reunioes/resumir", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ texto })
+        });
+
+        if (!resp.ok) {
+          resetOutput();
+          let errorMsg = "Erro desconhecido ao processar resumo.";
+          try {
+            const payload = await resp.json();
+            errorMsg = payload.mensagem || payload.detail || errorMsg;
+          } catch {
+            const textErr = await resp.text();
+            if (textErr) errorMsg = textErr;
+          }
+          showError(errorMsg);
+          return;
+        }
+
+        const payload = await resp.json();
+        renderOutput(payload);
+      } catch (error) {
+        resetOutput();
+        showError("Falha na comunicacao com o servidor: " + error.message);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
 </body>
 </html>

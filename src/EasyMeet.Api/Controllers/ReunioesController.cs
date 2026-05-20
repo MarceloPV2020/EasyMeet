@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace EasyMeet.Api.Controllers;
 
 /// <summary>
-/// Endpoints para análise e resumo de reuniões.
+/// Endpoints para analise e resumo de reunioes.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -14,7 +14,7 @@ public sealed class ReunioesController(IAgenteResumoReuniaoService agenteResumoR
     private const int TextoMinimoCaracteres = 20;
 
     /// <summary>
-    /// Recebe o texto de uma reunião e retorna resumo estruturado gerado por IA.
+    /// Recebe o texto de uma reuniao e retorna resumo estruturado gerado por IA.
     /// </summary>
     [HttpPost("resumir")]
     [ProducesResponseType(typeof(ResumoReuniaoResponse), StatusCodes.Status200OK)]
@@ -26,7 +26,7 @@ public sealed class ReunioesController(IAgenteResumoReuniaoService agenteResumoR
 
         if (string.IsNullOrWhiteSpace(texto))
         {
-            return BadRequest(new { mensagem = "O campo texto é obrigatório e não pode ser vazio." });
+            return BadRequest(new { mensagem = "O campo texto e obrigatorio e nao pode ser vazio." });
         }
 
         if (texto.Length < TextoMinimoCaracteres)
@@ -50,7 +50,7 @@ public sealed class ReunioesController(IAgenteResumoReuniaoService agenteResumoR
         catch (Exception ex)
         {
             return Problem(
-                title: "Falha ao processar o texto da reunião.",
+                title: "Falha ao processar o texto da reuniao.",
                 detail: ex.Message,
                 statusCode: StatusCodes.Status500InternalServerError);
         }

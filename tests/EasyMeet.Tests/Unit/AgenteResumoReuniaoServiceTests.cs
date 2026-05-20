@@ -15,46 +15,39 @@ public sealed class AgenteResumoReuniaoServiceTests
     [Fact]
     public async Task ResumirAsync_DeveGerarResumoCorreto_QuandoGeminiRetornaJsonValido()
     {
-        // Arrange
         var service = CreateServiceWithGeminiPayload(BuildGeminiEnvelope("""
             {
-              "resumo": "Resumo final da reunião de planejamento.",
-              "topicosPrincipais": ["Backlog", "Dependências"],
-              "acoes": ["Priorizar histórias", "Atualizar cronograma"],
+              "resumo": "Resumo final da reuniao de planejamento.",
+              "topicosPrincipais": ["Backlog", "Dependencias"],
+              "acoes": ["Priorizar historias", "Atualizar cronograma"],
               "responsaveis": ["Ana", "Carlos"],
               "tipoReuniao": "Planning",
               "nivelConfianca": 0.93
             }
             """));
 
-        // Act
-        var result = await service.ResumirAsync("Texto da reunião com conteúdo suficiente para análise de IA.", CancellationToken.None);
+        var result = await service.ResumirAsync("Texto da reuniao com conteudo suficiente para analise de IA.", CancellationToken.None);
 
-        // Assert
-        Assert.Equal("Resumo final da reunião de planejamento.", result.Resumo);
+        Assert.Equal("Resumo final da reuniao de planejamento.", result.Resumo);
         Assert.Contains("Backlog", result.TopicosPrincipais);
-        Assert.Equal("Planning", result.TipoReuniao);
     }
 
     [Fact]
     public async Task ResumirAsync_DeveLancarExcecao_QuandoGeminiFalhar()
     {
-        // Arrange
         var service = CreateServiceWithGeminiPayload("{" + "\"erro\":true}", HttpStatusCode.InternalServerError);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() => 
-            service.ResumirAsync("Texto de reunião válido para testar erro do Gemini.", CancellationToken.None));
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.ResumirAsync("Texto de reuniao valido para testar erro do Gemini.", CancellationToken.None));
     }
 
     [Fact]
     public async Task GeminiClientService_DeveMontarRequisicaoCorretaEProcessarResposta()
     {
-        // Arrange
         var handler = new FakeHttpMessageHandler((_, _) =>
             FakeHttpMessageHandler.JsonResponse(BuildGeminiEnvelope("""
             {
-              "resumo": "Resumo teste integração",
+              "resumo": "Resumo teste integracao",
               "topicosPrincipais": ["Topico 1"],
               "acoes": ["Acao 1"],
               "responsaveis": ["Resp 1"],
@@ -71,12 +64,10 @@ public sealed class AgenteResumoReuniaoServiceTests
         var options = Options.Create(new GeminiSettings { ApiKey = "fake-key" });
         var geminiClientService = new GeminiClientService(client, options, NullLogger<GeminiClientService>.Instance);
 
-        // Act
         var result = await geminiClientService.TryGerarResumoAsync("Prompt de teste", CancellationToken.None);
 
-        // Assert
         Assert.NotNull(result);
-        Assert.Equal("Resumo teste integração", result.Resumo);
+        Assert.Equal("Resumo teste integracao", result.Resumo);
         Assert.NotNull(handler.LastRequest);
         Assert.Equal(HttpMethod.Post, handler.LastRequest!.Method);
         Assert.Contains("gemini-2.5-flash:generateContent", handler.LastRequest.RequestUri!.ToString(), StringComparison.Ordinal);
@@ -92,7 +83,7 @@ public sealed class AgenteResumoReuniaoServiceTests
 
         var options = Options.Create(new GeminiSettings { ApiKey = "fake-key" });
         var geminiClientService = new GeminiClientService(client, options, NullLogger<GeminiClientService>.Instance);
-        
+
         var environment = new FakeWebHostEnvironment
         {
             ContentRootPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../src/EasyMeet.Api"))

@@ -15,7 +15,8 @@ Regras obrigatórias:
 1) Retorne somente JSON, sem markdown, sem texto extra e sem comentários.
 2) "nivelConfianca" deve estar entre 0.0 e 1.0.
 3) "topicosPrincipais", "acoes" e "responsaveis" devem ser arrays de strings.
-4) "tipoReuniao" deve ser uma classificação objetiva (ex: Daily, Planning, Status, Retrospective, OneOnOne, Incident, Executive ou Unknown).
+4) "tipoReuniao" deve ser uma classificação objetiva em português e fácil de entender.
+   Use apenas um destes valores: "Diária", "Planejamento", "Status", "Retrospectiva", "Um a Um", "Incidente", "Executiva" ou "Desconhecida".
 5) Se faltar contexto, preencha com melhor inferência possível, mantendo consistência e concisão.
 6) Resumo deve ser claro e curto (máximo 6 linhas).
 

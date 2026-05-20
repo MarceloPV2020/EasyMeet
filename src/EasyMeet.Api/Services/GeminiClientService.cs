@@ -210,7 +210,7 @@ public sealed class GeminiClientService(
                 TopicosPrincipais = result.TopicosPrincipais.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
                 Acoes = result.Acoes.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
                 Responsaveis = result.Responsaveis.Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => x.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).ToArray(),
-                TipoReuniao = string.IsNullOrWhiteSpace(result.TipoReuniao) ? "Unknown" : result.TipoReuniao.Trim(),
+                TipoReuniao = NormalizeTipoReuniao(result.TipoReuniao),
                 NivelConfianca = confidence
             };
         }
@@ -229,5 +229,27 @@ public sealed class GeminiClientService(
             && root.TryGetProperty("responsaveis", out var responsaveis) && responsaveis.ValueKind == JsonValueKind.Array
             && root.TryGetProperty("tipoReuniao", out var tipo) && tipo.ValueKind == JsonValueKind.String
             && root.TryGetProperty("nivelConfianca", out var confianca) && (confianca.ValueKind == JsonValueKind.Number || confianca.ValueKind == JsonValueKind.String);
+    }
+
+    private static string NormalizeTipoReuniao(string? tipoReuniao)
+    {
+        if (string.IsNullOrWhiteSpace(tipoReuniao))
+        {
+            return "Desconhecida";
+        }
+
+        var normalized = tipoReuniao.Trim().ToLowerInvariant();
+        return normalized switch
+        {
+            "daily" or "diaria" or "diária" => "Diária",
+            "planning" or "planejamento" => "Planejamento",
+            "status" => "Status",
+            "retrospective" or "retrospectiva" => "Retrospectiva",
+            "oneonone" or "one-on-one" or "one on one" or "1:1" or "um a um" => "Um a Um",
+            "incident" or "incidente" => "Incidente",
+            "executive" or "executiva" => "Executiva",
+            "unknown" or "desconhecida" => "Desconhecida",
+            _ => tipoReuniao.Trim()
+        };
     }
 }

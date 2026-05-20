@@ -10,35 +10,28 @@ public sealed class ReunioesControllerTests
     [Fact]
     public async Task ResumirAsync_DeveRetornarBadRequest_QuandoTextoVazio()
     {
-        // Arrange
         var controller = new ReunioesController(new FakeAgenteResumoReuniaoService());
         var request = new ResumoReuniaoRequest { Texto = "   " };
 
-        // Act
         var result = await controller.ResumirAsync(request, CancellationToken.None);
 
-        // Assert
         Assert.IsType<BadRequestObjectResult>(result);
     }
 
     [Fact]
     public async Task ResumirAsync_DeveRetornarBadRequest_QuandoTextoMuitoCurto()
     {
-        // Arrange
         var controller = new ReunioesController(new FakeAgenteResumoReuniaoService());
         var request = new ResumoReuniaoRequest { Texto = "curto" };
 
-        // Act
         var result = await controller.ResumirAsync(request, CancellationToken.None);
 
-        // Assert
         Assert.IsType<BadRequestObjectResult>(result);
     }
 
     [Fact]
     public async Task ResumirAsync_DeveRetornarOk_QuandoEntradaValida()
     {
-        // Arrange
         var expected = new ResumoReuniaoResponse
         {
             Resumo = "Resumo de teste",
@@ -54,13 +47,11 @@ public sealed class ReunioesControllerTests
         var controller = new ReunioesController(new FakeAgenteResumoReuniaoService(expected));
         var request = new ResumoReuniaoRequest
         {
-            Texto = "Este texto possui tamanho suficiente para validação e execução do fluxo completo."
+            Texto = "Este texto possui tamanho suficiente para validacao e execucao do fluxo completo."
         };
 
-        // Act
         var result = await controller.ResumirAsync(request, CancellationToken.None);
 
-        // Assert
         var ok = Assert.IsType<OkObjectResult>(result);
         var payload = Assert.IsType<ResumoReuniaoResponse>(ok.Value);
         Assert.Equal("Resumo de teste", payload.Resumo);
@@ -70,17 +61,14 @@ public sealed class ReunioesControllerTests
     [Fact]
     public async Task ResumirAsync_DeveRetornarBadRequest_QuandoServiceLancaInvalidOperation()
     {
-        // Arrange
         var controller = new ReunioesController(new ExceptionAgenteResumoReuniaoService(new InvalidOperationException("Erro simulado")));
         var request = new ResumoReuniaoRequest
         {
-            Texto = "Este texto possui tamanho suficiente para validação e execução do fluxo completo."
+            Texto = "Este texto possui tamanho suficiente para validacao e execucao do fluxo completo."
         };
 
-        // Act
         var result = await controller.ResumirAsync(request, CancellationToken.None);
 
-        // Assert
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
         Assert.NotNull(badRequest.Value);
     }
