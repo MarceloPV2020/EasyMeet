@@ -42,6 +42,7 @@ builder.Services.AddScoped<IApiKeyStore, WindowsCredentialApiKeyStore>();
 builder.Services.AddScoped<IAProviderFactory, AIProviderFactory>();
 builder.Services.AddScoped<ApiKeyManagerService>();
 builder.Services.AddScoped<IAgenteResumoReuniaoService, AgenteResumoReuniaoService>();
+builder.Services.AddSingleton<IReuniaoRepository, SqliteReuniaoRepository>();
 
 builder.Services.AddHttpClient<GeminiClientService>(client =>
 {
@@ -92,6 +93,12 @@ builder.Services.AddHttpClient<AzureOpenAIClientService>(client =>
 builder.Services.AddScoped<IGenerativeAIClient>(sp => sp.GetRequiredService<AzureOpenAIClientService>());
 
 var app = builder.Build();
+
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var reuniaoRepository = scope.ServiceProvider.GetRequiredService<IReuniaoRepository>();
+    await reuniaoRepository.InicializarAsync();
+}
 
 if (app.Environment.IsDevelopment())
 {

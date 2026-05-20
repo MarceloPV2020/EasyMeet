@@ -9,9 +9,24 @@ namespace EasyMeet.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public sealed class ReunioesController(IAgenteResumoReuniaoService agenteResumoReuniaoService) : ControllerBase
+public sealed class ReunioesController(
+    IAgenteResumoReuniaoService agenteResumoReuniaoService,
+    IReuniaoRepository reuniaoRepository) : ControllerBase
 {
     private const int TextoMinimoCaracteres = 20;
+
+    /// <summary>
+    /// Lista as reunioes ja analisadas.
+    /// </summary>
+    [HttpGet]
+    [HttpGet("/reunioes")]
+    [ProducesResponseType(typeof(IReadOnlyList<Reuniao>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> ListarAsync(CancellationToken cancellationToken)
+    {
+        var reunioes = await reuniaoRepository.ListarAsync(cancellationToken);
+        return Ok(reunioes);
+    }
 
     /// <summary>
     /// Recebe o texto de uma reuniao e retorna resumo estruturado gerado por IA.
@@ -41,6 +56,16 @@ public sealed class ReunioesController(IAgenteResumoReuniaoService agenteResumoR
                 request.ProvedorIA,
                 request.ConfiguracaoIA,
                 cancellationToken);
+
+            await reuniaoRepository.AdicionarAsync(new Reuniao
+            {
+                Transcricao = texto,
+                Resumo = response.Resumo,
+                Confianca = double.IsFinite(response.NivelConfianca)
+                    ? Convert.ToDecimal(response.NivelConfianca)
+                    : 0m
+            }, cancellationToken);
+
             return Ok(response);
         }
         catch (InvalidOperationException ex)

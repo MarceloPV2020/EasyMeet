@@ -59,6 +59,39 @@
       justify-content: flex-end;
     }
 
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin: 0 0 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .tab {
+      width: auto;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      padding: 10px 14px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .tab:hover {
+      background: #e8f1f8;
+      color: var(--ink);
+    }
+
+    .tab.active {
+      background: var(--surface);
+      border-color: var(--line);
+      color: var(--brand);
+    }
+
+    .tab-view[hidden] {
+      display: none;
+    }
+
     .config-toggle {
       width: auto;
       min-width: 150px;
@@ -237,6 +270,75 @@
       font-size: 12px;
     }
 
+    .history-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .history-toolbar button {
+      width: auto;
+      margin-top: 0;
+      padding: 9px 12px;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .history-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f9fbfd;
+      padding: 12px;
+    }
+
+    .history-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .history-title {
+      font-weight: 800;
+      color: #334155;
+    }
+
+    .history-confidence {
+      color: var(--ok);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .history-summary {
+      margin: 0;
+      white-space: pre-wrap;
+      line-height: 1.45;
+    }
+
+    .history-item details {
+      margin-top: 10px;
+      color: var(--muted);
+    }
+
+    .history-item summary {
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .history-transcription {
+      margin: 8px 0 0;
+      color: var(--ink);
+      white-space: pre-wrap;
+      line-height: 1.45;
+    }
+
     #toast {
       position: fixed;
       top: 18px;
@@ -281,6 +383,11 @@
       </div>
     </div>
 
+    <nav class="tabs" aria-label="Navegação principal">
+      <button id="tabAnalise" class="tab active" type="button">Análise</button>
+      <button id="tabHistorico" class="tab" type="button">Histórico</button>
+    </nav>
+
     <section id="configDrawer" class="config-drawer" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="configTitle">
       <section class="panel">
         <div class="panel-head">
@@ -310,7 +417,7 @@
       </section>
     </section>
 
-    <div class="grid">
+    <div id="analiseView" class="grid tab-view">
       <section class="panel">
         <div class="panel-head">
           <h2>Análise da reunião</h2>
@@ -386,10 +493,33 @@
         </div>
       </section>
     </div>
+
+    <section id="historicoView" class="tab-view" hidden>
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Histórico</h2>
+          <p>Reuniões analisadas salvas no banco SQLite local.</p>
+        </div>
+        <div class="panel-body">
+          <div class="history-toolbar">
+            <span id="historicoState" class="chip info">Pronto</span>
+            <button id="refreshHistorico" type="button" class="alt">Atualizar</button>
+          </div>
+          <div id="historicoList" class="history-list"></div>
+        </div>
+      </section>
+    </section>
   </div>
 
   <script>
     const toastEl = document.getElementById("toast");
+    const tabAnaliseBtn = document.getElementById("tabAnalise");
+    const tabHistoricoBtn = document.getElementById("tabHistorico");
+    const analiseViewEl = document.getElementById("analiseView");
+    const historicoViewEl = document.getElementById("historicoView");
+    const historicoStateEl = document.getElementById("historicoState");
+    const historicoListEl = document.getElementById("historicoList");
+    const refreshHistoricoBtn = document.getElementById("refreshHistorico");
     const toggleConfigBtn = document.getElementById("toggleConfig");
     const configDrawerEl = document.getElementById("configDrawer");
     const configBackdropEl = document.getElementById("configBackdrop");
@@ -481,6 +611,7 @@
 
     let providerStatus = {};
     let toastTimeout;
+    let historicoCarregado = false;
 
     function syncDrawerState(open) {
       configDrawerEl.classList.toggle("open", open);
@@ -506,6 +637,99 @@
       toastEl.style.background = isError ? "#b91c1c" : "#1f2937";
       if (toastTimeout) clearTimeout(toastTimeout);
       toastTimeout = setTimeout(() => toastEl.style.display = "none", 4500);
+    }
+
+    function setActiveTab(tab) {
+      const isHistorico = tab === "historico";
+      analiseViewEl.hidden = isHistorico;
+      historicoViewEl.hidden = !isHistorico;
+      tabAnaliseBtn.classList.toggle("active", !isHistorico);
+      tabHistoricoBtn.classList.toggle("active", isHistorico);
+
+      if (isHistorico && !historicoCarregado) {
+        fetchHistorico();
+      }
+    }
+
+    function formatConfianca(value) {
+      const number = Number(value);
+      return Number.isFinite(number)
+        ? `${Math.round(number * 100)}%`
+        : "Não informado";
+    }
+
+    function renderHistorico(reunioes) {
+      historicoListEl.innerHTML = "";
+
+      if (!Array.isArray(reunioes) || reunioes.length === 0) {
+        const empty = document.createElement("p");
+        empty.className = "muted";
+        empty.textContent = "Nenhuma reunião salva ainda.";
+        historicoListEl.appendChild(empty);
+        return;
+      }
+
+      reunioes.forEach(reuniao => {
+        const item = document.createElement("article");
+        item.className = "history-item";
+
+        const head = document.createElement("div");
+        head.className = "history-head";
+
+        const title = document.createElement("span");
+        title.className = "history-title";
+        title.textContent = `Reunião #${reuniao.id}`;
+
+        const confidence = document.createElement("span");
+        confidence.className = "history-confidence";
+        confidence.textContent = `Confiança ${formatConfianca(reuniao.confianca)}`;
+
+        const summary = document.createElement("p");
+        summary.className = "history-summary";
+        summary.textContent = reuniao.resumo || "Resumo não informado";
+
+        const details = document.createElement("details");
+        const detailsSummary = document.createElement("summary");
+        detailsSummary.textContent = "Transcrição";
+
+        const transcription = document.createElement("p");
+        transcription.className = "history-transcription";
+        transcription.textContent = reuniao.transcricao || "Transcrição não informada";
+
+        head.append(title, confidence);
+        details.append(detailsSummary, transcription);
+        item.append(head, summary, details);
+        historicoListEl.appendChild(item);
+      });
+    }
+
+    async function fetchHistorico(showLoading = true) {
+      if (showLoading) {
+        historicoStateEl.textContent = "Carregando";
+        historicoStateEl.className = "chip info";
+      }
+
+      try {
+        const resp = await fetch("/reunioes");
+        if (!resp.ok) {
+          throw new Error("Falha ao carregar histórico.");
+        }
+
+        const reunioes = await resp.json();
+        renderHistorico(reunioes);
+        historicoStateEl.textContent = `${Array.isArray(reunioes) ? reunioes.length : 0} registros`;
+        historicoStateEl.className = "chip ok";
+        historicoCarregado = true;
+      } catch (err) {
+        historicoStateEl.textContent = "Erro";
+        historicoStateEl.className = "chip bad";
+        historicoCarregado = false;
+        historicoListEl.innerHTML = "";
+        const error = document.createElement("p");
+        error.className = "muted";
+        error.textContent = err.message || "Não foi possível carregar o histórico.";
+        historicoListEl.appendChild(error);
+      }
     }
 
     function mapFriendlyErrorMessage(rawMessage) {
@@ -912,12 +1136,14 @@
         renderList(pendenciasEl, result.pendencias);
         tipoReuniaoEl.textContent = result.tipoReuniao || "Desconhecida";
         tipoReuniaoEl.className = "value";
-        confiancaEl.textContent = Number.isFinite(Number(result.nivelConfianca))
-          ? `${Math.round(Number(result.nivelConfianca) * 100)}%`
-          : "Não informado";
+        confiancaEl.textContent = formatConfianca(result.nivelConfianca);
         confiancaEl.className = "value";
         analysisStateEl.textContent = "Concluido";
         analysisStateEl.className = "chip ok";
+        historicoCarregado = false;
+        if (!historicoViewEl.hidden) {
+          await fetchHistorico(false);
+        }
       } catch (err) {
         resetAnalysisOutput();
         analysisStateEl.textContent = "Erro";
@@ -936,6 +1162,9 @@
       }
     }
 
+    tabAnaliseBtn.addEventListener("click", () => setActiveTab("analise"));
+    tabHistoricoBtn.addEventListener("click", () => setActiveTab("historico"));
+    refreshHistoricoBtn.addEventListener("click", () => fetchHistorico());
     providerConfigEl.addEventListener("change", updateProviderStatusChip);
     providerConfigEl.addEventListener("change", () => saveLastProvider(toApiProvider(providerConfigEl.value)));
     toggleConfigBtn.addEventListener("click", toggleConfigDrawer);
