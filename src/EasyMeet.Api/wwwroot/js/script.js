@@ -43,7 +43,7 @@ btn.addEventListener('click', async () => {
   clearResults();
 
   try {
-    const resp = await fetch('/api/reunioes/resumir', {
+    const resp = await fetch('/api/reunioes/analisar', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ texto })

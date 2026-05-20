@@ -60,7 +60,7 @@ Entregar uma experiência profissional para análise de reuniões com:
 - `POST /api/ia/credenciais`
 - `DELETE /api/ia/credenciais/{provedor}`
 - `POST /api/ia/credenciais/testar`
-- `POST /api/reunioes/resumir`
+- `POST /api/reunioes/analisar`
 
 ## Fluxo de análise
 1. O usuário seleciona um provedor.

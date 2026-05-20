@@ -70,7 +70,7 @@ Requisitos técnicos:
 - arquitetura organizada;
 - Clean Code;
 - comentários XML;
-- endpoint POST /api/reunioes/resumir;
+- endpoint POST /api/reunioes/analisar;
 - tratamento básico de erros;
 - validações.
 
@@ -165,7 +165,7 @@ Implementar:
 
 ## 4. Criar endpoint REST
 ### Prompt
-Crie o endpoint POST /api/reunioes/resumir.
+Crie o endpoint POST /api/reunioes/analisar.
 
 Entrada:
 
@@ -682,7 +682,7 @@ Expandir CI para executar esses testes e manter o limite de cobertura.
 
 Requisitos:
 - usar `Microsoft.AspNetCore.Mvc.Testing`;
-- validar o endpoint `POST /api/reunioes/resumir`;
+- validar o endpoint `POST /api/reunioes/analisar`;
 - substituir dependências externas por fakes/mocks nos testes;
 - evitar chamadas reais para provedores de IA;
 - garantir que o pipeline HTTP completo execute controller, model binding, serialização e DI;

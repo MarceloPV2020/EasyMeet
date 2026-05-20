@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace EasyMeet.Api.Controllers;
 
 /// <summary>
-/// Endpoints para analise e resumo de reunioes.
+/// Endpoints para analise de reunioes.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -29,8 +29,9 @@ public sealed class ReunioesController(
     }
 
     /// <summary>
-    /// Recebe o texto de uma reuniao e retorna resumo estruturado gerado por IA.
+    /// Recebe o texto de uma reuniao e retorna uma analise estruturada gerada por IA.
     /// </summary>
+    [HttpPost("analisar")]
     [HttpPost("resumir")]
     [ProducesResponseType(typeof(ResumoReuniaoResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
