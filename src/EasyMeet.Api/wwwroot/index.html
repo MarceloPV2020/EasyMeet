@@ -4,1517 +4,217 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>EasyMeet - Multi-IA</title>
-  <style>
-    :root {
-      --bg: #eef3f7;
-      --surface: #ffffff;
-      --line: #d9e3ee;
-      --ink: #17212f;
-      --muted: #5f7289;
-      --brand: #0f766e;
-      --brand-dark: #0b5f59;
-      --warn: #a16207;
-      --ok: #166534;
-      --bad: #b91c1c;
-      --shadow: 0 14px 34px rgba(23, 33, 47, 0.10);
-    }
-
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: radial-gradient(circle at top left, #f5fbff, var(--bg) 50%);
-      color: var(--ink);
-      font-family: "Segoe UI", "Trebuchet MS", sans-serif;
-    }
-    .shell {
-      max-width: 1650px;
-      margin: 0 auto;
-      padding: 18px 20px 24px;
-    }
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-    h1 { margin: 0; font-size: 24px; }
-    .sub { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
-    .status {
-      border: 1px solid #beded8;
-      background: #e8f6f3;
-      color: var(--ok);
-      border-radius: 999px;
-      padding: 7px 11px;
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-
-    .top-actions {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .tabs {
-      display: flex;
-      gap: 8px;
-      margin: 0 0 14px;
-      border-bottom: 1px solid var(--line);
-    }
-
-    .tab {
-      width: auto;
-      border: 1px solid transparent;
-      border-bottom: none;
-      border-radius: 8px 8px 0 0;
-      padding: 10px 14px;
-      background: transparent;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .tab:hover {
-      background: #e8f1f8;
-      color: var(--ink);
-    }
-
-    .tab.active {
-      background: var(--surface);
-      border-color: var(--line);
-      color: var(--brand);
-    }
-
-    .tab-view[hidden] {
-      display: none;
-    }
-
-    .config-toggle {
-      width: auto;
-      min-width: 150px;
-      padding: 9px 12px;
-      background: #334155;
-    }
-
-    .grid {
-      display: grid;
-      gap: 16px;
-      min-height: calc(100vh - 100px);
-    }
-
-    .config-drawer {
-      position: fixed;
-      top: 0;
-      right: 0;
-      width: min(520px, 94vw);
-      height: 100vh;
-      z-index: 1200;
-      background: var(--surface);
-      border-left: 1px solid var(--line);
-      box-shadow: -16px 0 38px rgba(23, 33, 47, 0.18);
-      transform: translateX(100%);
-      transition: transform .22s ease;
-      overflow-y: auto;
-      padding: 12px;
-    }
-
-    .config-drawer.open {
-      transform: translateX(0);
-    }
-
-    .backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.34);
-      z-index: 1100;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity .2s ease;
-    }
-
-    .backdrop.open {
-      opacity: 1;
-      pointer-events: all;
-    }
-
-    .config-drawer .panel { min-height: auto; box-shadow: none; border-radius: 10px; }
-
-    .config-drawer .panel-body {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      align-items: end;
-    }
-
-    .config-drawer .wide {
-      grid-column: span 2;
-    }
-
-    .panel {
-      background: var(--surface);
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      box-shadow: var(--shadow);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .panel-head {
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--line);
-      background: #fbfdff;
-    }
-    .panel-head h2 { margin: 0; font-size: 16px; }
-    .panel-head p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
-    .panel-body { padding: 16px; display: grid; gap: 12px; }
-    .row { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
-    .row.single { grid-template-columns: 1fr; }
-    .row.analysis-top { grid-template-columns: 1fr auto; align-items: end; }
-    .advanced-config {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #f8fbfe;
-      padding: 10px 12px;
-    }
-    .advanced-config summary {
-      cursor: pointer;
-      font-weight: 700;
-      color: #334155;
-      user-select: none;
-    }
-    .summary-status {
-      font-weight: 800;
-    }
-    .summary-status.info { color: #1d4ed8; }
-    .summary-status.ok { color: var(--ok); }
-    .summary-status.bad { color: var(--bad); }
-
-    label {
-      font-size: 12px;
-      color: #3d4f63;
-      font-weight: 800;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-      display: block;
-    }
-    select, input, textarea, button {
-      width: 100%;
-      font: inherit;
-      border-radius: 8px;
-      border: 1px solid var(--line);
-    }
-    select, input, textarea {
-      padding: 10px 12px;
-      background: #fff;
-      color: var(--ink);
-    }
-    textarea {
-      min-height: 270px;
-      resize: vertical;
-      line-height: 1.45;
-    }
-    button {
-      border: none;
-      background: var(--brand);
-      color: #fff;
-      font-weight: 700;
-      padding: 11px 12px;
-      cursor: pointer;
-    }
-    button:hover { background: var(--brand-dark); }
-    button.alt { background: #334155; }
-    button.warn { background: #b45309; }
-    button.danger { background: #b91c1c; }
-    button:disabled { opacity: .6; cursor: not-allowed; }
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      border-radius: 999px;
-      padding: 7px 10px;
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      width: fit-content;
-      border: 1px solid transparent;
-    }
-    .chip.ok { background: #e8f6f3; color: var(--ok); border-color: #bde2d8; }
-    .chip.bad { background: #fff1f2; color: var(--bad); border-color: #fecdd3; }
-    .chip.info { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
-
-    .result {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-    .card {
-      border: 1px solid var(--line);
-      background: #f9fbfd;
-      border-radius: 8px;
-      padding: 12px;
-      min-height: 120px;
-    }
-    .card.full { grid-column: 1 / -1; }
-    .card h3 {
-      margin: 0 0 8px;
-      font-size: 13px;
-      color: #334155;
-      text-transform: uppercase;
-    }
-    .value { margin: 0; white-space: pre-wrap; line-height: 1.45; }
-    ul { margin: 0; padding-left: 18px; }
-    li { margin: 5px 0; }
-    .muted { color: var(--muted); font-style: italic; }
-    .actions-list {
-      display: grid;
-      gap: 8px;
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-    .action-item {
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      padding: 8px;
-      background: #fff;
-      font-size: 13px;
-      line-height: 1.35;
-    }
-    .action-meta {
-      margin-top: 5px;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .history-toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .history-toolbar button {
-      width: auto;
-      margin-top: 0;
-      padding: 9px 12px;
-    }
-
-    .history-filters {
-      display: grid;
-      grid-template-columns: minmax(220px, 2fr) minmax(150px, 1fr) minmax(140px, 1fr) auto;
-      gap: 10px;
-      align-items: end;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #f8fbfe;
-      padding: 12px;
-    }
-
-    .history-filters button {
-      min-width: 96px;
-    }
-
-    .history-list {
-      display: grid;
-      gap: 10px;
-    }
-
-    .history-item {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #f9fbfd;
-      padding: 12px;
-    }
-
-    .history-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 8px;
-    }
-
-    .history-title {
-      font-weight: 800;
-      color: #334155;
-    }
-
-    .history-confidence {
-      color: var(--ok);
-      font-size: 12px;
-      font-weight: 800;
-      text-transform: uppercase;
-    }
-
-    .history-summary {
-      margin: 0;
-      white-space: pre-wrap;
-      line-height: 1.45;
-    }
-
-    .history-meta {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin: 8px 0 10px;
-    }
-
-    .history-details-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .history-section {
-      border: 1px solid var(--line);
-      border-radius: 6px;
-      background: #fff;
-      padding: 10px;
-    }
-
-    .history-section h4 {
-      margin: 0 0 6px;
-      color: #334155;
-      font-size: 12px;
-      text-transform: uppercase;
-    }
-
-    .history-item details {
-      margin-top: 10px;
-      color: var(--muted);
-    }
-
-    .history-item summary {
-      cursor: pointer;
-      font-weight: 700;
-    }
-
-    .history-transcription {
-      margin: 8px 0 0;
-      color: var(--ink);
-      white-space: pre-wrap;
-      line-height: 1.45;
-    }
-
-    #toast {
-      position: fixed;
-      top: 18px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 9999;
-      display: none;
-      max-width: min(94vw, 780px);
-      padding: 11px 14px;
-      border-radius: 8px;
-      background: #1f2937;
-      color: #fff;
-      font-weight: 700;
-      text-align: center;
-    }
-
-    @media (max-width: 980px) {
-      .grid { grid-template-columns: 1fr; min-height: auto; }
-      .result { grid-template-columns: 1fr; }
-      .row { grid-template-columns: 1fr; }
-      .topbar { align-items: flex-start; flex-direction: column; }
-      .top-actions { justify-content: flex-start; }
-      .config-drawer { width: 100vw; }
-      .config-drawer .panel-body { grid-template-columns: 1fr; }
-      .config-drawer .wide { grid-column: auto; }
-      .history-filters { grid-template-columns: 1fr; }
-      .history-details-grid { grid-template-columns: 1fr; }
-    }
-  </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script src="/js/easymeet.js" defer></script>
 </head>
 <body>
   <div id="toast"></div>
   <div id="configBackdrop" class="backdrop"></div>
 
-  <div class="shell">
-    <div class="topbar">
-      <div>
-        <h1>EasyMeet</h1>
-        <p class="sub">Plataforma local de análise inteligente de reuniões com múltiplos provedores de IA.</p>
-      </div>
-      <div class="top-actions">
-        <span class="status">Windows Local</span>
-        <button id="toggleConfig" class="config-toggle" type="button" aria-controls="configDrawer" aria-expanded="false">Configurar IA</button>
-      </div>
-    </div>
-
-    <nav class="tabs" aria-label="Navegação principal">
-      <button id="tabAnalise" class="tab active" type="button">Análise</button>
-      <button id="tabHistorico" class="tab" type="button">Histórico</button>
-    </nav>
-
-    <section id="configDrawer" class="config-drawer" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="configTitle">
-      <section class="panel">
-        <div class="panel-head">
-          <h2 id="configTitle">Configuração das IAs</h2>
-          <p>Gerenciamento seguro de credenciais no Windows Credential Manager.</p>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Navegação do EasyMeet">
+      <div class="brand-block">
+        <div class="brand-mark" aria-hidden="true">EM</div>
+        <div>
+          <h1>EasyMeet</h1>
+          <p>Meeting Intelligence</p>
         </div>
-        <div class="panel-body">
-          <div>
-            <label for="providerConfig">Provedor</label>
-            <select id="providerConfig"></select>
-          </div>
+      </div>
 
-          <div>
-            <label>Status atual</label>
-            <span id="providerStatus" class="chip info">Carregando...</span>
-          </div>
+      <nav class="side-nav" aria-label="Navegação principal">
+        <button id="tabAnalise" class="tab active" type="button">
+          <span class="nav-icon" aria-hidden="true">+</span>
+          Nova análise
+        </button>
+        <button id="tabHistorico" class="tab" type="button">
+          <span class="nav-icon" aria-hidden="true">◷</span>
+          Histórico
+        </button>
+        <button id="toggleConfig" class="tab config-toggle" type="button" aria-controls="configDrawer" aria-expanded="false">
+          <span class="nav-icon" aria-hidden="true">⚙</span>
+          Configuração IA
+        </button>
+      </nav>
 
-          <div class="wide">
-            <label for="apiKey">API Key</label>
-            <input id="apiKey" type="password" autocomplete="off" placeholder="Informe a API Key do provedor selecionado" />
-          </div>
-
-          <button id="saveKey">Salvar</button>
-          <button id="testKey" class="warn">Testar conexão</button>
-          <button id="deleteKey" class="danger">Remover chave</button>
+      <section class="provider-panel" aria-label="Status dos provedores">
+        <div class="provider-panel-head">
+          <span>Providers</span>
+          <span class="pulse-dot" aria-hidden="true"></span>
+        </div>
+        <div id="sidebarProviders" class="provider-stack">
+          <span class="provider-pill">Carregando...</span>
         </div>
       </section>
-    </section>
 
-    <div id="analiseView" class="grid tab-view">
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Análise da reunião</h2>
-          <p>Selecione o provedor e gere o resumo estruturado com a IA configurada.</p>
+      <div class="sidebar-footer">
+        <span class="status">Windows Local</span>
+      </div>
+    </aside>
+
+    <main class="main-stage">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">AI meeting workspace</p>
+          <h2>Análise inteligente de reuniões</h2>
+          <p class="sub">Resumo executivo, decisões, ações, responsáveis, pendências e histórico local em um só fluxo.</p>
         </div>
-        <div class="panel-body">
-          <details class="advanced-config">
-            <summary id="analysisConfigSummary">Configuração da análise (IA atual: não definida)</summary>
-            <div class="row analysis-top" style="margin-top:10px;">
-              <div>
-                <label for="providerAnalysis">Provedor para análise</label>
-                <select id="providerAnalysis"></select>
-              </div>
+      </header>
+
+      <section id="configDrawer" class="config-drawer" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="configTitle">
+        <section class="panel settings-panel">
+          <div class="panel-head">
+            <p class="eyebrow">Settings</p>
+            <h2 id="configTitle">Configuração das IAs</h2>
+            <p>Gerencie credenciais no Windows Credential Manager sem expor API Keys na aplicação.</p>
+          </div>
+          <div class="panel-body settings-grid">
+            <div>
+              <label for="providerConfig">Provedor</label>
+              <select id="providerConfig"></select>
             </div>
-            <div class="row" style="margin-top:10px;">
+
+            <div>
+              <label>Status atual</label>
+              <span id="providerStatus" class="chip info">Carregando...</span>
+            </div>
+
+            <div class="wide">
+              <label for="apiKey">API Key</label>
+              <input id="apiKey" type="password" autocomplete="off" placeholder="Informe a API Key do provedor selecionado" />
+            </div>
+
+            <button id="saveKey">Salvar</button>
+            <button id="testKey" class="warn">Testar conexão</button>
+            <button id="deleteKey" class="danger">Remover chave</button>
+          </div>
+        </section>
+      </section>
+
+      <div id="analiseView" class="grid tab-view">
+        <section class="panel analysis-panel">
+          <div class="panel-head hero-panel-head">
+            <div>
+              <p class="eyebrow">Meeting analysis</p>
+              <h2>Análise da reunião</h2>
+              <p>Cole a transcrição, selecione a IA quando necessário e gere um relatório executivo estruturado.</p>
+            </div>
+          </div>
+
+          <div class="panel-body analysis-body">
+            <details class="advanced-config">
+              <summary id="analysisConfigSummary">Configuração da análise (IA atual: não definida)</summary>
+              <div class="row analysis-top">
+                <div>
+                  <label for="providerAnalysis">Provedor para análise</label>
+                  <select id="providerAnalysis"></select>
+                </div>
+              </div>
+              <div class="row">
+                <div>
+                  <label for="modeloIa">Modelo (opcional)</label>
+                  <select id="modeloIa"></select>
+                </div>
+                <div>
+                  <label for="temperaturaIa">Temperatura (0 a 2)</label>
+                  <select id="temperaturaIa">
+                    <option value="">Padrão do provedor (0.2 - Conservador)</option>
+                    <option value="0">0.0 - Muito determinístico</option>
+                    <option value="0.1">0.1 - Determinístico</option>
+                    <option value="0.2">0.2 - Conservador</option>
+                    <option value="0.4">0.4 - Levemente criativo</option>
+                    <option value="0.7">0.7 - Balanceado</option>
+                    <option value="1">1.0 - Mais criativo</option>
+                  </select>
+                </div>
+              </div>
+              <div class="row">
+                <div>
+                  <label for="maxTokensIa">Máx. tokens (64 a 8192)</label>
+                  <input id="maxTokensIa" type="number" min="64" max="8192" step="1" placeholder="Padrão sugerido: 1024" />
+                </div>
+              </div>
+              <div class="row">
+                <div><button id="saveDefaultsIa" type="button" class="alt">Salvar como padrão</button></div>
+                <div><button id="clearDefaultsIa" type="button" class="alt">Restaurar padrão</button></div>
+              </div>
+            </details>
+
+            <div class="row single">
+              <button id="switchToGroq" type="button" class="alt quota-action" style="display:none;">Quota do Gemini excedida: usar Groq agora</button>
+            </div>
+
+            <div class="transcription-card">
+              <label for="transcricao">Transcrição</label>
+              <textarea id="transcricao" placeholder="Cole aqui a transcrição completa da reunião..."></textarea>
+              <button id="analisar" class="primary-action">Analisar reunião</button>
+            </div>
+
+            <section class="result" aria-label="Resultado da análise">
+              <article class="card full summary-card">
+                <div class="card-title-row">
+                  <span class="card-icon">✦</span>
+                  <h3>Resumo executivo</h3>
+                </div>
+                <p id="resumo" class="value muted">Aguardando análise...</p>
+              </article>
+              <article class="card"><h3>Tópicos</h3><ul id="topicos"></ul></article>
+              <article class="card"><h3>Ações</h3><ul id="acoes" class="actions-list"></ul></article>
+              <article class="card"><h3>Responsáveis</h3><ul id="responsaveis"></ul></article>
+              <article class="card"><h3>Decisões</h3><ul id="decisoes"></ul></article>
+              <article class="card"><h3>Pendências</h3><ul id="pendencias"></ul></article>
+              <article class="card metric-card"><h3>Data da reunião</h3><p id="dataReuniao" class="value muted">-</p></article>
+              <article class="card metric-card"><h3>Tipo de reunião</h3><p id="tipoReuniao" class="value muted">-</p></article>
+              <article class="card metric-card"><h3>Confiança</h3><p id="confianca" class="value muted">-</p></article>
+            </section>
+          </div>
+        </section>
+      </div>
+
+      <section id="historicoView" class="tab-view" hidden>
+        <section class="panel history-panel">
+          <div class="panel-head history-heading">
+            <div>
+              <p class="eyebrow">Knowledge base</p>
+              <h2>Histórico</h2>
+              <p>Reuniões analisadas salvas no banco SQLite local.</p>
+            </div>
+            <div class="history-toolbar">
+              <span id="historicoState" class="chip info">Pronto</span>
+              <button id="refreshHistorico" type="button" class="alt">Atualizar</button>
+            </div>
+          </div>
+
+          <div class="panel-body history-body">
+            <div class="history-filters" aria-label="Filtros do histórico">
               <div>
-                <label for="modeloIa">Modelo (opcional)</label>
-                <select id="modeloIa"></select>
+                <label for="historicoFiltroTexto">Buscar</label>
+                <input id="historicoFiltroTexto" type="search" placeholder="Resumo, ação, responsável ou transcrição" />
               </div>
               <div>
-                <label for="temperaturaIa">Temperatura (0 a 2)</label>
-                <select id="temperaturaIa">
-                  <option value="">Padrão do provedor (0.2 - Conservador)</option>
-                  <option value="0">0.0 - Muito determinístico</option>
-                  <option value="0.1">0.1 - Determinístico</option>
-                  <option value="0.2">0.2 - Conservador</option>
-                  <option value="0.4">0.4 - Levemente criativo</option>
-                  <option value="0.7">0.7 - Balanceado</option>
-                  <option value="1">1.0 - Mais criativo</option>
+                <label for="historicoFiltroData">Data</label>
+                <input id="historicoFiltroData" type="date" />
+              </div>
+              <div>
+                <label for="historicoFiltroTipo">Tipo</label>
+                <select id="historicoFiltroTipo">
+                  <option value="">Todos</option>
                 </select>
               </div>
+              <button id="limparFiltrosHistorico" type="button" class="alt">Limpar</button>
             </div>
-            <div class="row" style="margin-top:10px;">
-              <div>
-                <label for="maxTokensIa">Máx. tokens (64 a 8192)</label>
-                <input id="maxTokensIa" type="number" min="64" max="8192" step="1" placeholder="Padrão sugerido: 1024" />
-              </div>
+            <div id="historicoList" class="history-list"></div>
+            <div class="history-pagination" aria-label="Paginação do histórico">
+              <button id="historicoPaginaAnterior" type="button" class="alt">Anterior</button>
+              <span id="historicoPaginaInfo" class="pagination-info">Página 1 de 1</span>
+              <button id="historicoProximaPagina" type="button" class="alt">Próxima</button>
             </div>
-            <div class="row" style="margin-top:10px;">
-              <div><button id="saveDefaultsIa" type="button" class="alt">Salvar como padrão</button></div>
-              <div><button id="clearDefaultsIa" type="button" class="alt">Restaurar padrão</button></div>
-            </div>
-          </details>
-
-          <div class="row single">
-            <button id="switchToGroq" type="button" class="alt" style="display:none;">Quota do Gemini excedida: usar Groq agora</button>
           </div>
-
-          <div>
-            <label for="transcricao">Transcrição</label>
-            <textarea id="transcricao" placeholder="Cole aqui a transcrição completa da reunião..."></textarea>
-          </div>
-
-          <button id="analisar">Analisar reunião</button>
-
-          <section class="result">
-            <article class="card full">
-              <h3>Resumo</h3>
-              <p id="resumo" class="value muted">Aguardando análise...</p>
-            </article>
-            <article class="card"><h3>Tópicos</h3><ul id="topicos"></ul></article>
-            <article class="card"><h3>Ações</h3><ul id="acoes" class="actions-list"></ul></article>
-            <article class="card"><h3>Responsáveis</h3><ul id="responsaveis"></ul></article>
-            <article class="card"><h3>Decisões</h3><ul id="decisoes"></ul></article>
-            <article class="card"><h3>Pendências</h3><ul id="pendencias"></ul></article>
-            <article class="card"><h3>Data da reunião</h3><p id="dataReuniao" class="value muted">-</p></article>
-            <article class="card"><h3>Tipo de reunião</h3><p id="tipoReuniao" class="value muted">-</p></article>
-            <article class="card"><h3>Confiança</h3><p id="confianca" class="value muted">-</p></article>
-          </section>
-        </div>
+        </section>
       </section>
-    </div>
-
-    <section id="historicoView" class="tab-view" hidden>
-      <section class="panel">
-        <div class="panel-head">
-          <h2>Histórico</h2>
-          <p>Reuniões analisadas salvas no banco SQLite local.</p>
-        </div>
-        <div class="panel-body">
-          <div class="history-toolbar">
-            <span id="historicoState" class="chip info">Pronto</span>
-            <button id="refreshHistorico" type="button" class="alt">Atualizar</button>
-          </div>
-          <div class="history-filters" aria-label="Filtros do histórico">
-            <div>
-              <label for="historicoFiltroTexto">Buscar</label>
-              <input id="historicoFiltroTexto" type="search" placeholder="Resumo, ação, responsável ou transcrição" />
-            </div>
-            <div>
-              <label for="historicoFiltroData">Data</label>
-              <input id="historicoFiltroData" type="date" />
-            </div>
-            <div>
-              <label for="historicoFiltroTipo">Tipo</label>
-              <select id="historicoFiltroTipo">
-                <option value="">Todos</option>
-              </select>
-            </div>
-            <button id="limparFiltrosHistorico" type="button" class="alt">Limpar</button>
-          </div>
-          <div id="historicoList" class="history-list"></div>
-        </div>
-      </section>
-    </section>
+    </main>
   </div>
-
-  <script>
-    const toastEl = document.getElementById("toast");
-    const tabAnaliseBtn = document.getElementById("tabAnalise");
-    const tabHistoricoBtn = document.getElementById("tabHistorico");
-    const analiseViewEl = document.getElementById("analiseView");
-    const historicoViewEl = document.getElementById("historicoView");
-    const historicoStateEl = document.getElementById("historicoState");
-    const historicoListEl = document.getElementById("historicoList");
-    const refreshHistoricoBtn = document.getElementById("refreshHistorico");
-    const historicoFiltroTextoEl = document.getElementById("historicoFiltroTexto");
-    const historicoFiltroDataEl = document.getElementById("historicoFiltroData");
-    const historicoFiltroTipoEl = document.getElementById("historicoFiltroTipo");
-    const limparFiltrosHistoricoBtn = document.getElementById("limparFiltrosHistorico");
-    const toggleConfigBtn = document.getElementById("toggleConfig");
-    const configDrawerEl = document.getElementById("configDrawer");
-    const configBackdropEl = document.getElementById("configBackdrop");
-    const providerConfigEl = document.getElementById("providerConfig");
-    const providerAnalysisEl = document.getElementById("providerAnalysis");
-    const providerStatusEl = document.getElementById("providerStatus");
-    const apiKeyEl = document.getElementById("apiKey");
-    const transcricaoEl = document.getElementById("transcricao");
-    const switchToGroqBtn = document.getElementById("switchToGroq");
-    const modeloIaEl = document.getElementById("modeloIa");
-    const temperaturaIaEl = document.getElementById("temperaturaIa");
-    const maxTokensIaEl = document.getElementById("maxTokensIa");
-    const saveDefaultsIaBtn = document.getElementById("saveDefaultsIa");
-    const clearDefaultsIaBtn = document.getElementById("clearDefaultsIa");
-    const analysisConfigSummaryEl = document.getElementById("analysisConfigSummary");
-
-    const resumoEl = document.getElementById("resumo");
-    const topicosEl = document.getElementById("topicos");
-    const acoesEl = document.getElementById("acoes");
-    const responsaveisEl = document.getElementById("responsaveis");
-    const decisoesEl = document.getElementById("decisoes");
-    const pendenciasEl = document.getElementById("pendencias");
-    const dataReuniaoEl = document.getElementById("dataReuniao");
-    const tipoReuniaoEl = document.getElementById("tipoReuniao");
-    const confiancaEl = document.getElementById("confianca");
-
-    const saveKeyBtn = document.getElementById("saveKey");
-    const testKeyBtn = document.getElementById("testKey");
-    const deleteKeyBtn = document.getElementById("deleteKey");
-    const analisarBtn = document.getElementById("analisar");
-    const advancedDefaultsStorageKey = "easymeet:ia-advanced-defaults:v1";
-    const lastProviderStorageKey = "easymeet:last-provider:v1";
-    const modelosPorProvedor = {
-      Gemini: [
-        { value: "", label: "Padrão do provedor (gemini-2.5-flash)" },
-        { value: "gemini-2.5-flash", label: "gemini-2.5-flash" },
-        { value: "gemini-2.5-flash-lite", label: "gemini-2.5-flash-lite" },
-        { value: "gemini-2.0-flash", label: "gemini-2.0-flash" },
-        { value: "gemini-1.5-flash", label: "gemini-1.5-flash" }
-      ],
-      Groq: [
-        { value: "", label: "Padrão do provedor (llama-3.1-8b-instant)" },
-        { value: "llama-3.1-8b-instant", label: "llama-3.1-8b-instant" },
-        { value: "llama-3.3-70b-versatile", label: "llama-3.3-70b-versatile" }
-      ],
-      OpenAI: [
-        { value: "", label: "Padrão do provedor (gpt-4.1-mini)" },
-        { value: "gpt-4.1-mini", label: "gpt-4.1-mini" },
-        { value: "gpt-4.1", label: "gpt-4.1" }
-      ],
-      Anthropic: [
-        { value: "", label: "Padrão do provedor (claude-3-7-sonnet-20250219)" },
-        { value: "claude-3-7-sonnet-20250219", label: "claude-3-7-sonnet-20250219" },
-        { value: "claude-sonnet-4-20250514", label: "claude-sonnet-4-20250514" }
-      ],
-      Mistral: [
-        { value: "", label: "Padrão do provedor (mistral-small-latest)" },
-        { value: "mistral-small-latest", label: "mistral-small-latest" },
-        { value: "mistral-medium-latest", label: "mistral-medium-latest" }
-      ],
-      Cohere: [
-        { value: "", label: "Padrão do provedor (command-a-03-2025)" },
-        { value: "command-a-03-2025", label: "command-a-03-2025" },
-        { value: "command-r-08-2024", label: "command-r-08-2024" }
-      ],
-      AzureOpenAI: [
-        { value: "", label: "Padrão do provedor (deployment configurado)" },
-        { value: "gpt-4.1-mini", label: "gpt-4.1-mini (deployment)" },
-        { value: "gpt-4.1", label: "gpt-4.1 (deployment)" }
-      ]
-    };
-    const maxTokensSugeridoPorProvedor = {
-      Gemini: 1024,
-      Groq: 1024,
-      OpenAI: 1024,
-      Anthropic: 1024,
-      Mistral: 1024,
-      Cohere: 1024,
-      AzureOpenAI: 1024
-    };
-    const temperaturaPadraoPorProvedor = {
-      Gemini: 0.2,
-      Groq: 0.2,
-      OpenAI: 0.2,
-      Anthropic: 0.2,
-      Mistral: 0.2,
-      Cohere: 0.2,
-      AzureOpenAI: 0.2
-    };
-
-    let providerStatus = {};
-    let toastTimeout;
-    let historicoCarregado = false;
-    let historicoOriginal = [];
-    let analysisStatus = { text: "Pronto", className: "chip info" };
-
-    function syncDrawerState(open) {
-      configDrawerEl.classList.toggle("open", open);
-      configBackdropEl.classList.toggle("open", open);
-      configDrawerEl.setAttribute("aria-hidden", open ? "false" : "true");
-      toggleConfigBtn.textContent = open ? "Ocultar configuração" : "Configurar IA";
-      toggleConfigBtn.setAttribute("aria-expanded", String(open));
-      document.body.style.overflow = open ? "hidden" : "";
-    }
-
-    function toggleConfigDrawer() {
-      const open = !configDrawerEl.classList.contains("open");
-      syncDrawerState(open);
-    }
-
-    function closeConfigDrawer() {
-      syncDrawerState(false);
-    }
-
-    function showToast(message, isError = false) {
-      toastEl.style.display = "block";
-      toastEl.textContent = message;
-      toastEl.style.background = isError ? "#b91c1c" : "#1f2937";
-      if (toastTimeout) clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(() => toastEl.style.display = "none", 4500);
-    }
-
-    function setActiveTab(tab) {
-      const isHistorico = tab === "historico";
-      analiseViewEl.hidden = isHistorico;
-      historicoViewEl.hidden = !isHistorico;
-      tabAnaliseBtn.classList.toggle("active", !isHistorico);
-      tabHistoricoBtn.classList.toggle("active", isHistorico);
-
-      if (isHistorico && !historicoCarregado) {
-        fetchHistorico();
-      }
-    }
-
-    function formatConfianca(value) {
-      const number = Number(value);
-      return Number.isFinite(number)
-        ? `${Math.round(number * 100)}%`
-        : "Não informado";
-    }
-
-    function formatDataReuniao(value) {
-      if (!value) {
-        return "Não identificada";
-      }
-
-      const parts = value.toString().split("-");
-      return parts.length === 3
-        ? `${parts[2]}/${parts[1]}/${parts[0]}`
-        : value;
-    }
-
-    function createHistorySection(title, content) {
-      const section = document.createElement("section");
-      section.className = "history-section";
-
-      const heading = document.createElement("h4");
-      heading.textContent = title;
-
-      section.appendChild(heading);
-
-      if (content instanceof Node) {
-        section.appendChild(content);
-      } else {
-        const text = document.createElement("p");
-        text.className = "value";
-        text.textContent = content || "Não identificado";
-        section.appendChild(text);
-      }
-
-      return section;
-    }
-
-    function createHistoryList(items) {
-      const list = document.createElement("ul");
-      if (!Array.isArray(items) || items.length === 0) {
-        const empty = document.createElement("li");
-        empty.className = "muted";
-        empty.textContent = "Não identificado";
-        list.appendChild(empty);
-        return list;
-      }
-
-      items.forEach(item => {
-        const li = document.createElement("li");
-        li.textContent = item;
-        list.appendChild(li);
-      });
-      return list;
-    }
-
-    function createHistoryActions(actions) {
-      const list = document.createElement("ul");
-      list.className = "actions-list";
-      if (!Array.isArray(actions) || actions.length === 0) {
-        const empty = document.createElement("li");
-        empty.className = "muted";
-        empty.textContent = "Não identificado";
-        list.appendChild(empty);
-        return list;
-      }
-
-      actions.forEach(item => {
-        const li = document.createElement("li");
-        li.className = "action-item";
-        const descricao = item?.descricao || "Sem descrição";
-        const responsavel = item?.responsavel || "Não identificado";
-        const prazo = item?.prazo || "";
-        const meta = prazo ? `Responsável: ${responsavel} | Prazo: ${prazo}` : `Responsável: ${responsavel}`;
-        li.textContent = descricao;
-
-        const metaEl = document.createElement("div");
-        metaEl.className = "action-meta";
-        metaEl.textContent = meta;
-        li.appendChild(metaEl);
-        list.appendChild(li);
-      });
-
-      return list;
-    }
-
-    function normalizeText(value) {
-      return (value || "").toString().toLocaleLowerCase("pt-BR").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    }
-
-    function uniqueValues(items, selector) {
-      return [...new Set(items.map(selector).filter(value => value && value.toString().trim()))]
-        .sort((a, b) => a.localeCompare(b, "pt-BR"));
-    }
-
-    function populateHistoryFilterOptions(reunioes) {
-      const selectedTipo = historicoFiltroTipoEl.value;
-
-      historicoFiltroTipoEl.innerHTML = '<option value="">Todos</option>';
-      uniqueValues(reunioes, item => item.tipoReuniao).forEach(value => {
-        const option = document.createElement("option");
-        option.value = value;
-        option.textContent = value;
-        historicoFiltroTipoEl.appendChild(option);
-      });
-
-      if (Array.from(historicoFiltroTipoEl.options).some(option => option.value === selectedTipo)) {
-        historicoFiltroTipoEl.value = selectedTipo;
-      }
-    }
-
-    function buildHistorySearchText(reuniao) {
-      const acoes = Array.isArray(reuniao.acoes)
-        ? reuniao.acoes.map(acao => `${acao?.descricao || ""} ${acao?.responsavel || ""} ${acao?.prazo || ""}`).join(" ")
-        : "";
-
-      return normalizeText([
-        reuniao.resumo,
-        reuniao.transcricao,
-        reuniao.dataReuniao,
-        reuniao.tipoReuniao,
-        reuniao.modoExecucao,
-        ...(reuniao.topicosPrincipais || []),
-        ...(reuniao.responsaveis || []),
-        ...(reuniao.decisoes || []),
-        ...(reuniao.pendencias || []),
-        acoes
-      ].join(" "));
-    }
-
-    function filtrarHistorico() {
-      const termo = normalizeText(historicoFiltroTextoEl.value);
-      const data = historicoFiltroDataEl.value;
-      const tipo = historicoFiltroTipoEl.value;
-
-      return historicoOriginal.filter(reuniao => {
-        const matchesText = !termo || buildHistorySearchText(reuniao).includes(termo);
-        const matchesData = !data || reuniao.dataReuniao === data;
-        const matchesTipo = !tipo || reuniao.tipoReuniao === tipo;
-
-        return matchesText && matchesData && matchesTipo;
-      });
-    }
-
-    function aplicarFiltrosHistorico() {
-      const filtradas = filtrarHistorico();
-      renderHistorico(filtradas);
-      historicoStateEl.textContent = `${filtradas.length} de ${historicoOriginal.length} registros`;
-      historicoStateEl.className = "chip ok";
-    }
-
-    function limparFiltrosHistorico() {
-      historicoFiltroTextoEl.value = "";
-      historicoFiltroDataEl.value = "";
-      historicoFiltroTipoEl.value = "";
-      aplicarFiltrosHistorico();
-    }
-
-    function renderHistorico(reunioes) {
-      historicoListEl.innerHTML = "";
-
-      if (!Array.isArray(reunioes) || reunioes.length === 0) {
-        const empty = document.createElement("p");
-        empty.className = "muted";
-        empty.textContent = "Nenhuma reunião salva ainda.";
-        historicoListEl.appendChild(empty);
-        return;
-      }
-
-      reunioes.forEach(reuniao => {
-        const item = document.createElement("article");
-        item.className = "history-item";
-
-        const head = document.createElement("div");
-        head.className = "history-head";
-
-        const title = document.createElement("span");
-        title.className = "history-title";
-        title.textContent = `Reunião #${reuniao.id}`;
-
-        const confidence = document.createElement("span");
-        confidence.className = "history-confidence";
-        confidence.textContent = `Confiança ${formatConfianca(reuniao.confianca)}`;
-
-        const summary = document.createElement("p");
-        summary.className = "history-summary";
-        summary.textContent = reuniao.resumo || "Resumo não informado";
-
-        const meta = document.createElement("div");
-        meta.className = "history-meta";
-
-        const tipoChip = document.createElement("span");
-        tipoChip.className = "chip info";
-        tipoChip.textContent = reuniao.tipoReuniao || "Tipo não identificado";
-
-        const dataChip = document.createElement("span");
-        dataChip.className = "chip info";
-        dataChip.textContent = `Data: ${formatDataReuniao(reuniao.dataReuniao)}`;
-
-        const iaChip = document.createElement("span");
-        iaChip.className = "chip info";
-        iaChip.textContent = reuniao.modoExecucao || "IA não identificada";
-
-        const origemChip = document.createElement("span");
-        origemChip.className = reuniao.geradoPorIA ? "chip ok" : "chip bad";
-        origemChip.textContent = reuniao.geradoPorIA ? "Gerado por IA" : "Origem não identificada";
-
-        meta.append(dataChip, tipoChip, iaChip, origemChip);
-
-        const analysisDetails = document.createElement("details");
-        const analysisSummary = document.createElement("summary");
-        analysisSummary.textContent = "Ver análise completa";
-
-        const detailsGrid = document.createElement("div");
-        detailsGrid.className = "history-details-grid";
-        detailsGrid.append(
-          createHistorySection("Tópicos", createHistoryList(reuniao.topicosPrincipais)),
-          createHistorySection("Ações", createHistoryActions(reuniao.acoes)),
-          createHistorySection("Responsáveis", createHistoryList(reuniao.responsaveis)),
-          createHistorySection("Decisões", createHistoryList(reuniao.decisoes)),
-          createHistorySection("Pendências", createHistoryList(reuniao.pendencias))
-        );
-        analysisDetails.append(analysisSummary, detailsGrid);
-
-        const transcriptionDetails = document.createElement("details");
-        const detailsSummary = document.createElement("summary");
-        detailsSummary.textContent = "Ver transcrição";
-
-        const transcription = document.createElement("p");
-        transcription.className = "history-transcription";
-        transcription.textContent = reuniao.transcricao || "Transcrição não informada";
-
-        head.append(title, confidence);
-        transcriptionDetails.append(detailsSummary, transcription);
-        item.append(head, summary, meta, analysisDetails, transcriptionDetails);
-        historicoListEl.appendChild(item);
-      });
-    }
-
-    async function fetchHistorico(showLoading = true) {
-      if (showLoading) {
-        historicoStateEl.textContent = "Carregando";
-        historicoStateEl.className = "chip info";
-      }
-
-      try {
-        const resp = await fetch("/reunioes");
-        if (!resp.ok) {
-          throw new Error("Falha ao carregar histórico.");
-        }
-
-        const reunioes = await resp.json();
-        historicoOriginal = Array.isArray(reunioes) ? reunioes : [];
-        populateHistoryFilterOptions(historicoOriginal);
-        aplicarFiltrosHistorico();
-        historicoCarregado = true;
-      } catch (err) {
-        historicoStateEl.textContent = "Erro";
-        historicoStateEl.className = "chip bad";
-        historicoCarregado = false;
-        historicoOriginal = [];
-        historicoListEl.innerHTML = "";
-        const error = document.createElement("p");
-        error.className = "muted";
-        error.textContent = err.message || "Não foi possível carregar o histórico.";
-        historicoListEl.appendChild(error);
-      }
-    }
-
-    function mapFriendlyErrorMessage(rawMessage) {
-      const message = (rawMessage || "").toString().trim();
-      const lower = message.toLowerCase();
-
-      if (!message) {
-        return "Não foi possível concluir a análise agora. Tente novamente em instantes.";
-      }
-
-      if (lower.includes("chave de api nao configurada") || lower.includes("chave de api não configurada")) {
-        return "A chave de API do provedor selecionado ainda não foi configurada. Abra 'Configurar IA' e salve a chave.";
-      }
-
-      if (lower.includes("chave de api nao informada") || lower.includes("chave de api não informada")) {
-        return "A chave de API informada está ausente. Verifique a configuração do provedor.";
-      }
-
-      if (lower.includes("status 401") || lower.includes("status 403")) {
-        return "Não foi possível autenticar no provedor de IA. Confira a API Key e tente novamente.";
-      }
-
-      if (lower.includes("status 429") || lower.includes("too many requests")) {
-        if (lower.includes("insufficient_quota") || lower.includes("quota") || lower.includes("billing") || lower.includes("credit")) {
-          return "Sua conta/projeto atingiu o limite de uso (quota/crédito) no provedor. Verifique billing, orçamento e limites da API.";
-        }
-        return "O provedor recebeu muitas requisições agora. Aguarde alguns segundos e tente novamente.";
-      }
-
-      if (lower.includes("status 503") || lower.includes("high demand") || lower.includes("service unavailable")) {
-        return "O provedor de IA está com alta demanda no momento. Tente novamente em instantes.";
-      }
-
-      if (lower.includes("status 504") || lower.includes("gateway timeout") || lower.includes("tempo limite")) {
-        return "A resposta da IA demorou mais do que o esperado. Tente novamente.";
-      }
-
-      if (lower.includes("decommissioned") || lower.includes("no longer supported")) {
-        return "O modelo selecionado foi descontinuado pelo provedor. Escolha outro modelo e tente novamente.";
-      }
-
-      if (lower.includes("status 404") && lower.includes("modelo")) {
-        return "O modelo selecionado não está disponível para sua conta/chave. Selecione outro modelo.";
-      }
-
-      if (lower.includes("status 400")) {
-        return "Não foi possível processar a solicitação com os parâmetros atuais. Revise o modelo/configurações e tente novamente.";
-      }
-
-      return message;
-    }
-
-    function shouldSuggestGroqSwitch(rawMessage) {
-      const msg = (rawMessage || "").toString().toLowerCase();
-      return msg.includes("gemini retornou status 429")
-        && (msg.includes("exceeded your current quota") || msg.includes("quota"));
-    }
-
-    function hideGroqSuggestion() {
-      switchToGroqBtn.style.display = "none";
-    }
-
-    function showGroqSuggestionIfAvailable() {
-      const hasGroq = Array.from(providerAnalysisEl.options).some(x => x.value === "Groq");
-      switchToGroqBtn.style.display = hasGroq ? "block" : "none";
-    }
-
-    function toApiProvider(value) {
-      return value;
-    }
-
-    function saveLastProvider(provider) {
-      if (!provider) return;
-      localStorage.setItem(lastProviderStorageKey, provider);
-    }
-
-    function loadLastProvider() {
-      return localStorage.getItem(lastProviderStorageKey) || "";
-    }
-
-    function updateModeloOptionsForProvider() {
-      const provider = toApiProvider(providerAnalysisEl.value);
-      const options = modelosPorProvedor[provider] || [{ value: "", label: "Padrão do provedor" }];
-      const current = modeloIaEl.value;
-
-      modeloIaEl.innerHTML = "";
-      options.forEach(opt => {
-        const option = document.createElement("option");
-        option.value = opt.value;
-        option.textContent = opt.label;
-        modeloIaEl.appendChild(option);
-      });
-
-      if (options.some(x => x.value === current)) {
-        modeloIaEl.value = current;
-      }
-    }
-
-    function getSummaryStatusClass() {
-      if (analysisStatus.className.includes("ok")) return "ok";
-      if (analysisStatus.className.includes("bad")) return "bad";
-      return "info";
-    }
-
-    function updateAnalysisConfigSummary() {
-      const provider = toApiProvider(providerAnalysisEl.value) || "não definida";
-      const status = (analysisStatus.text || "Pronto").trim();
-      const statusClass = getSummaryStatusClass();
-      analysisConfigSummaryEl.innerHTML = `Configuração da análise (IA atual: ${provider} | status: <span class="summary-status ${statusClass}">${status}</span>)`;
-    }
-
-    function setAnalysisState(text, chipClass) {
-      analysisStatus = { text, className: chipClass };
-      updateAnalysisConfigSummary();
-    }
-
-    function updateMaxTokensPlaceholderForProvider() {
-      const provider = toApiProvider(providerAnalysisEl.value);
-      const sugerido = maxTokensSugeridoPorProvedor[provider] ?? 1024;
-      maxTokensIaEl.placeholder = `Padrão sugerido: ${sugerido}`;
-    }
-
-    function updateTemperaturaDefaultLabelForProvider() {
-      const provider = toApiProvider(providerAnalysisEl.value);
-      const sugerido = temperaturaPadraoPorProvedor[provider] ?? 0.2;
-      if (temperaturaIaEl.options.length > 0) {
-        temperaturaIaEl.options[0].textContent = `Padrão do provedor (${sugerido.toFixed(1)} - Conservador)`;
-      }
-    }
-
-    function readDefaultsStore() {
-      try {
-        const raw = localStorage.getItem(advancedDefaultsStorageKey);
-        if (!raw) return {};
-        const parsed = JSON.parse(raw);
-        return typeof parsed === "object" && parsed ? parsed : {};
-      } catch {
-        return {};
-      }
-    }
-
-    function writeDefaultsStore(store) {
-      localStorage.setItem(advancedDefaultsStorageKey, JSON.stringify(store));
-    }
-
-    function setAdvancedConfigFields(config) {
-      modeloIaEl.value = config?.modelo || "";
-      temperaturaIaEl.value = config?.temperatura ?? "";
-      maxTokensIaEl.value = config?.maxTokens ?? "";
-    }
-
-    function applyDefaultsForCurrentProvider() {
-      const provider = toApiProvider(providerAnalysisEl.value);
-      const store = readDefaultsStore();
-      updateModeloOptionsForProvider();
-      updateTemperaturaDefaultLabelForProvider();
-      updateMaxTokensPlaceholderForProvider();
-      updateAnalysisConfigSummary();
-      setAdvancedConfigFields(store[provider] || null);
-    }
-
-    function readAdvancedConfig() {
-      const modelo = (modeloIaEl.value || "").trim();
-      const temperaturaRaw = (temperaturaIaEl.value || "").trim();
-      const maxTokensRaw = (maxTokensIaEl.value || "").trim();
-
-      const hasTemperatura = temperaturaRaw.length > 0;
-      const hasMaxTokens = maxTokensRaw.length > 0;
-
-      const temperatura = hasTemperatura ? Number(temperaturaRaw) : null;
-      const maxTokens = hasMaxTokens ? Number(maxTokensRaw) : null;
-
-      if (hasTemperatura && (!Number.isFinite(temperatura) || temperatura < 0 || temperatura > 2)) {
-        throw new Error("Temperatura inválida. Use um valor entre 0 e 2.");
-      }
-
-      if (hasMaxTokens && (!Number.isFinite(maxTokens) || maxTokens < 64 || maxTokens > 8192)) {
-        throw new Error("Máx. tokens inválido. Use um valor entre 64 e 8192.");
-      }
-
-      if (!modelo && !hasTemperatura && !hasMaxTokens) {
-        return null;
-      }
-
-      return {
-        modelo: modelo || null,
-        temperatura: hasTemperatura ? temperatura : null,
-        maxTokens: hasMaxTokens ? Math.trunc(maxTokens) : null
-      };
-    }
-
-    function saveAdvancedDefaults() {
-      const provider = toApiProvider(providerAnalysisEl.value);
-      const config = readAdvancedConfig();
-      const store = readDefaultsStore();
-      store[provider] = config;
-      writeDefaultsStore(store);
-      showToast(`Configurações padrão salvas para ${provider}.`);
-    }
-
-    function clearAdvancedDefaults() {
-      const provider = toApiProvider(providerAnalysisEl.value);
-      const store = readDefaultsStore();
-      delete store[provider];
-      writeDefaultsStore(store);
-      setAdvancedConfigFields(null);
-      showToast(`Padrões restaurados para ${provider}.`);
-    }
-
-    function renderList(el, list) {
-      el.innerHTML = "";
-      if (!Array.isArray(list) || list.length === 0) {
-        const li = document.createElement("li");
-        li.className = "muted";
-        li.textContent = "Não identificado";
-        el.appendChild(li);
-        return;
-      }
-
-      list.forEach(item => {
-        const li = document.createElement("li");
-        li.textContent = item;
-        el.appendChild(li);
-      });
-    }
-
-    function renderActions(el, list) {
-      el.innerHTML = "";
-      if (!Array.isArray(list) || list.length === 0) {
-        const li = document.createElement("li");
-        li.className = "muted";
-        li.textContent = "Não identificado";
-        el.appendChild(li);
-        return;
-      }
-
-      list.forEach(item => {
-        const li = document.createElement("li");
-        li.className = "action-item";
-        const descricao = item?.descricao || "Sem descrição";
-        const responsavel = item?.responsavel || "Não identificado";
-        const prazo = item?.prazo || "";
-
-        const meta = prazo ? `Responsável: ${responsavel} | Prazo: ${prazo}` : `Responsável: ${responsavel}`;
-        li.innerHTML = `<div>${descricao}</div><div class="action-meta">${meta}</div>`;
-        el.appendChild(li);
-      });
-    }
-
-    function resetAnalysisOutput() {
-      resumoEl.textContent = "Aguardando análise...";
-      resumoEl.className = "value muted";
-      renderList(topicosEl, []);
-      renderActions(acoesEl, []);
-      renderList(responsaveisEl, []);
-      renderList(decisoesEl, []);
-      renderList(pendenciasEl, []);
-      dataReuniaoEl.textContent = "-";
-      dataReuniaoEl.className = "value muted";
-      tipoReuniaoEl.textContent = "-";
-      tipoReuniaoEl.className = "value muted";
-      confiancaEl.textContent = "-";
-      confiancaEl.className = "value muted";
-    }
-
-    function updateProviderStatusChip() {
-      const provider = providerConfigEl.value;
-      const configured = providerStatus[provider] === true;
-      providerStatusEl.textContent = configured ? "Configurado" : "Não configurado";
-      providerStatusEl.className = configured ? "chip ok" : "chip bad";
-    }
-
-    async function fetchProviders() {
-      const resp = await fetch("/api/ia/provedores");
-      if (!resp.ok) throw new Error("Falha ao carregar provedores.");
-      const providers = await resp.json();
-      providerConfigEl.innerHTML = "";
-      providerAnalysisEl.innerHTML = "";
-      providers.forEach(p => {
-        const optionA = document.createElement("option");
-        optionA.value = p.provedorIA;
-        optionA.textContent = p.nome;
-        providerConfigEl.appendChild(optionA);
-
-        const optionB = document.createElement("option");
-        optionB.value = p.provedorIA;
-        optionB.textContent = p.nome;
-        providerAnalysisEl.appendChild(optionB);
-      });
-
-      const lastProvider = loadLastProvider();
-      if (lastProvider && providers.some(p => p.provedorIA === lastProvider)) {
-        providerConfigEl.value = lastProvider;
-        providerAnalysisEl.value = lastProvider;
-      }
-    }
-
-    async function fetchStatus() {
-      const resp = await fetch("/api/ia/credenciais/status");
-      if (!resp.ok) throw new Error("Falha ao carregar status de credenciais.");
-      const status = await resp.json();
-      providerStatus = {};
-      status.forEach(item => { providerStatus[item.provedorIA] = item.configurado; });
-      updateProviderStatusChip();
-    }
-
-    async function saveOrUpdateKey() {
-      const provedorIA = toApiProvider(providerConfigEl.value);
-      const apiKey = apiKeyEl.value.trim();
-      if (!apiKey) {
-        showToast("Informe a API Key antes de salvar.", true);
-        return;
-      }
-
-      const resp = await fetch("/api/ia/credenciais", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provedorIA, apiKey })
-      });
-
-      if (!resp.ok) {
-        showToast("Não foi possível salvar a chave.", true);
-        return;
-      }
-
-      await fetchStatus();
-      apiKeyEl.value = "";
-      showToast("Chave salva com sucesso.");
-    }
-
-    async function testKey() {
-      const provedorIA = toApiProvider(providerConfigEl.value);
-      const apiKey = apiKeyEl.value.trim();
-      if (!apiKey) {
-        showToast("Informe uma API Key para testar a conexão.", true);
-        return;
-      }
-
-      testKeyBtn.disabled = true;
-      testKeyBtn.textContent = "Testando...";
-      try {
-        const resp = await fetch("/api/ia/credenciais/testar", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ provedorIA, apiKey })
-        });
-
-        if (!resp.ok) {
-          showToast("Falha ao testar conexão.", true);
-          return;
-        }
-
-        const data = await resp.json();
-        if (data.sucesso) {
-          showToast("Conexão válida.");
-        } else {
-          const detalhe = (data.mensagem || "").toString().trim();
-          const amigavel = mapFriendlyErrorMessage(detalhe || "Conexão recusada.");
-          const mensagemFinal = detalhe && amigavel !== detalhe
-            ? `${amigavel} Detalhe técnico: ${detalhe}`
-            : amigavel;
-          showToast(mensagemFinal, true);
-        }
-      } finally {
-        testKeyBtn.disabled = false;
-        testKeyBtn.textContent = "Testar conexão";
-      }
-    }
-
-    async function deleteKey() {
-      const provedorIA = toApiProvider(providerConfigEl.value);
-      const resp = await fetch(`/api/ia/credenciais/${provedorIA}`, { method: "DELETE" });
-      if (!resp.ok) {
-        showToast("Falha ao remover chave.", true);
-        return;
-      }
-      await fetchStatus();
-      showToast("Chave removida com sucesso.");
-    }
-
-    async function analisarReuniao() {
-      hideGroqSuggestion();
-      const transcricao = transcricaoEl.value.trim();
-      const provedorIA = toApiProvider(providerAnalysisEl.value);
-      if (!transcricao) {
-        showToast("Informe a transcrição para análise.", true);
-        return;
-      }
-
-      analisarBtn.disabled = true;
-      setAnalysisState("Processando", "chip info");
-      resumoEl.textContent = "Processando...";
-      resumoEl.className = "value";
-
-      try {
-        const configuracaoIA = readAdvancedConfig();
-        const payload = { transcricao, provedorIA };
-        if (configuracaoIA) {
-          payload.configuracaoIA = configuracaoIA;
-        }
-
-        const resp = await fetch("/api/reunioes/analisar", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        if (!resp.ok) {
-          let error = "Falha na análise.";
-          try {
-            const payload = await resp.json();
-            error = payload.mensagem || payload.detail || error;
-          } catch {}
-          throw new Error(error);
-        }
-
-        const result = await resp.json();
-        resumoEl.textContent = result.resumo || "Não informado";
-        resumoEl.className = "value";
-        renderList(topicosEl, result.topicosPrincipais);
-        renderActions(acoesEl, result.acoes);
-        renderList(responsaveisEl, result.responsaveis);
-        renderList(decisoesEl, result.decisoes);
-        renderList(pendenciasEl, result.pendencias);
-        dataReuniaoEl.textContent = formatDataReuniao(result.dataReuniao);
-        dataReuniaoEl.className = "value";
-        tipoReuniaoEl.textContent = result.tipoReuniao || "Desconhecida";
-        tipoReuniaoEl.className = "value";
-        confiancaEl.textContent = formatConfianca(result.nivelConfianca);
-        confiancaEl.className = "value";
-        setAnalysisState("Concluído", "chip ok");
-        historicoCarregado = false;
-        if (!historicoViewEl.hidden) {
-          await fetchHistorico(false);
-        }
-      } catch (err) {
-        resetAnalysisOutput();
-        setAnalysisState("Erro", "chip bad");
-        const detalhe = (err?.message || "").toString().trim();
-        const amigavel = mapFriendlyErrorMessage(detalhe || "Erro inesperado na análise.");
-        const mensagemFinal = detalhe && amigavel !== detalhe
-          ? `${amigavel} Detalhe técnico: ${detalhe}`
-          : amigavel;
-        if (shouldSuggestGroqSwitch(detalhe)) {
-          showGroqSuggestionIfAvailable();
-        }
-        showToast(mensagemFinal, true);
-      } finally {
-        analisarBtn.disabled = false;
-      }
-    }
-
-    tabAnaliseBtn.addEventListener("click", () => setActiveTab("analise"));
-    tabHistoricoBtn.addEventListener("click", () => setActiveTab("historico"));
-    refreshHistoricoBtn.addEventListener("click", () => fetchHistorico());
-    historicoFiltroTextoEl.addEventListener("input", aplicarFiltrosHistorico);
-    historicoFiltroDataEl.addEventListener("change", aplicarFiltrosHistorico);
-    historicoFiltroTipoEl.addEventListener("change", aplicarFiltrosHistorico);
-    limparFiltrosHistoricoBtn.addEventListener("click", limparFiltrosHistorico);
-    providerConfigEl.addEventListener("change", updateProviderStatusChip);
-    providerConfigEl.addEventListener("change", () => saveLastProvider(toApiProvider(providerConfigEl.value)));
-    toggleConfigBtn.addEventListener("click", toggleConfigDrawer);
-    configBackdropEl.addEventListener("click", closeConfigDrawer);
-    saveKeyBtn.addEventListener("click", saveOrUpdateKey);
-    testKeyBtn.addEventListener("click", testKey);
-    deleteKeyBtn.addEventListener("click", deleteKey);
-    analisarBtn.addEventListener("click", analisarReuniao);
-    saveDefaultsIaBtn.addEventListener("click", () => {
-      try {
-        saveAdvancedDefaults();
-      } catch (err) {
-        showToast(err.message || "Falha ao salvar padrões avançados.", true);
-      }
-    });
-    clearDefaultsIaBtn.addEventListener("click", clearAdvancedDefaults);
-    providerAnalysisEl.addEventListener("change", () => {
-      saveLastProvider(toApiProvider(providerAnalysisEl.value));
-      applyDefaultsForCurrentProvider();
-      hideGroqSuggestion();
-    });
-    switchToGroqBtn.addEventListener("click", () => {
-      const hasGroq = Array.from(providerAnalysisEl.options).some(x => x.value === "Groq");
-      if (!hasGroq) {
-        showToast("Provedor Groq não está disponível nesta instância.", true);
-        return;
-      }
-
-      providerAnalysisEl.value = "Groq";
-      providerConfigEl.value = "Groq";
-      providerConfigEl.dispatchEvent(new Event("change"));
-      providerAnalysisEl.dispatchEvent(new Event("change"));
-      showToast("Provedor alterado para Groq. Você já pode analisar novamente.");
-    });
-    document.addEventListener("keydown", event => {
-      if (event.key === "Escape" && configDrawerEl.classList.contains("open")) {
-        closeConfigDrawer();
-      }
-    });
-
-    async function bootstrap() {
-      resetAnalysisOutput();
-      await fetchProviders();
-      await fetchStatus();
-      applyDefaultsForCurrentProvider();
-      setAnalysisState("Pronto", "chip info");
-    }
-
-    bootstrap().catch(err => showToast(err.message || "Falha na inicialização.", true));
-  </script>
 </body>
 </html>
-
-
-

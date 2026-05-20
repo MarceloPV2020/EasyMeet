@@ -567,6 +567,229 @@ Toda análise válida deve utilizar IA real.
 - dotnet test EasyMeet.sln
 - dotnet run --project .\src\EasyMeet.Api\EasyMeet.Api.csproj
 
+## 12. Requisito: Cobertura Mínima de Testes - 30%
+### Prompt
+Atualize as políticas de contribuição para exigir cobertura mínima de testes automatizados de 30% antes de aprovação e merge de Pull Requests.
+
+## Obrigatoriedade
+Todo Pull Request deve atender a uma cobertura mínima de **30%** de testes automatizados antes de ser aprovado e mesclado.
+
+## O que é considerado
+- Testes unitários (xUnit, NUnit, MSTest, etc.)
+- Testes de integração
+- Testes que validem o comportamento da funcionalidade
+- Linhas de código executadas durante a execução dos testes
+
+## O que não é considerado
+- Código comentado
+- Métodos que apenas delegam responsabilidades sem lógica
+- Arquivos de configuração
+
+## Validação
+A cobertura será verificada através do relatório `coverage.opencover.xml` gerado pela execução dos testes:
+
+```powershell
+dotnet test --collect:"XPlat Code Coverage"
+```
+
+## 13. Criar testes de integração com WebApplicationFactory
+### Prompt
+Criar testes de integração com WebApplicationFactory para validar o pipeline HTTP completo.
+
+Adicionar casos de teste para:
+- resposta do controlador;
+- fallback local.
+
+Expandir CI para executar esses testes e manter o limite de cobertura.
+
+Requisitos:
+- usar `Microsoft.AspNetCore.Mvc.Testing`;
+- validar o endpoint `POST /api/reunioes/analisar`;
+- substituir dependências externas por fakes/mocks nos testes;
+- evitar chamadas reais para provedores de IA;
+- garantir que o pipeline HTTP completo execute controller, model binding, serialização e DI;
+- manter o gate mínimo de cobertura de 30%;
+- garantir execução via GitHub Actions;
+- rodar `dotnet test` com coleta de cobertura.
+
+## 14. Melhorias de design de interface
+### Prompt
+Refatore completamente o design da interface do EasyMeet para um visual moderno, premium e profissional inspirado em aplicações SaaS modernas como:
+
+- ChatGPT
+- Microsoft Copilot
+- Linear
+- Notion
+- Slack
+- Vercel
+- OpenAI Platform
+
+IMPORTANTE:
+- NÃO alterar funcionalidades existentes.
+- NÃO remover integrações.
+- NÃO quebrar chamadas da API.
+- Melhorar apenas UX/UI, organização visual e experiência do usuário.
+
+Objetivo:
+Transformar o EasyMeet em uma aplicação visualmente moderna e elegante de análise inteligente de reuniões com múltiplos provedores de IA.
+
+Tecnologias:
+- HTML
+- CSS
+- JavaScript puro
+- Compatível com ASP.NET Core wwwroot
+- Não usar frameworks pesados
+
+Melhorias obrigatórias:
+
+1. Estrutura visual moderna
+- Criar layout estilo dashboard SaaS.
+- Sidebar lateral fixa.
+- Área principal com conteúdo fluido.
+- Topbar moderna.
+- Layout semelhante ao ChatGPT/Copilot.
+
+2. Dark mode premium
+Aplicar tema escuro elegante:
+- fundo principal quase preto (#0f172a / #111827)
+- cards com contraste suave
+- bordas discretas
+- sombras modernas
+- visual clean e minimalista
+
+3. Melhorar tipografia
+- Fonte moderna (Inter, Segoe UI ou similar)
+- Melhor hierarquia visual
+- Mais espaçamento entre seções
+- Melhor leitura da transcrição e resultados
+
+4. Melhorar cards
+Transformar resultados em cards premium:
+- bordas suaves
+- sombras modernas
+- hover elegante
+- ícones
+- separação visual forte
+
+5. Sidebar profissional
+Sidebar contendo:
+- logo EasyMeet
+- Nova análise
+- Histórico
+- Configuração IA
+- Status dos providers
+
+Visual semelhante:
+- Notion
+- Linear
+- Slack
+
+6. Melhorar área de análise
+- textarea moderna
+- animação de foco
+- botão principal com destaque
+- loading moderno
+- melhor espaçamento
+- área mais limpa
+
+7. Melhorar exibição dos resultados
+Criar visual semelhante a relatório executivo:
+- resumo em destaque
+- ações em cards/timeline
+- responsáveis com badges
+- decisões destacadas
+- confiança visualmente elegante
+
+8. Melhorar histórico
+Transformar histórico em:
+- lista premium
+- cards expansíveis
+- visual de timeline
+- filtros modernos
+
+9. Melhorar chips/status
+Criar chips modernos:
+- Gemini
+- Groq
+- OpenAI
+- Configurado
+- Não configurado
+- Processando
+- Erro
+
+10. Melhorar feedback visual
+Adicionar:
+- loading spinner moderno
+- animações suaves
+- transições
+- skeleton loading
+- feedback visual elegante
+
+11. Responsividade
+Garantir:
+- desktop premium
+- tablet
+- mobile
+
+12. Melhorar drawer de configuração
+Transformar em painel lateral moderno estilo:
+- GitHub Copilot
+- VS Code settings
+- ChatGPT settings
+
+13. Adicionar identidade visual EasyMeet
+Criar:
+- logo textual elegante
+- cores principais modernas
+- aparência de produto SaaS real
+
+14. Melhorar CSS
+Refatorar:
+- variáveis CSS organizadas
+- spacing system
+- sombras consistentes
+- cores consistentes
+- design system simples
+
+15. NÃO remover:
+- tabs
+- histórico
+- providers
+- análise
+- configurações IA
+- integrações existentes
+
+16. Manter funcionamento completo:
+- fetch APIs
+- eventos JavaScript
+- IDs atuais
+- chamadas atuais
+- controllers atuais
+
+17. Objetivo visual final:
+A interface deve parecer:
+- produto SaaS moderno
+- ferramenta premium de IA
+- dashboard corporativo profissional
+- aplicação pronta para produção
+
+18. Resultado esperado:
+Gerar versão nova e moderna do:
+- index.html
+- styles.css (separado)
+- melhorias visuais no JavaScript apenas quando necessário
+
+19. Organização:
+Separar:
+- HTML
+- CSS
+- JavaScript
+
+20. Importante:
+Não quebrar nenhum endpoint existente.
+Não alterar contratos da API.
+Melhorar apenas UX/UI e organização visual.
+
 ## 12. Revisão final da atividade
 ### Prompt
 Revise todo o projeto EasyMeet considerando os requisitos da atividade acadêmica.
@@ -601,91 +824,3 @@ Depois informe:
   - dotnet build
   - dotnet test
   - dotnet run
-
-## 13. Submissão ao Repositório Git com Pull Request
-### Prompt
-Prepare a submissão final do projeto EasyMeet para GitHub.
-
-Objetivo:
-Submeter todas as alterações atuais em uma branch feature/easymeet-ia e preparar um Pull Request completo.
-
-Execute as seguintes etapas:
-
-1. Verifique alterações pendentes.
-2. Verifique a branch atual.
-3. Caso necessário, troque/crie a branch:
-   feature/easymeet-ia
-
-4. Adicione todos os arquivos:
-   git add .
-
-5. Faça commit utilizando:
-   feat: implementa easymeet com assistente inteligente de reunioes
-
-6. Faça push para:
-   origin feature/easymeet-ia
-
-7. Verifique se existe:
-   .github/workflows/dotnet-ci.yml
-
-8. Verifique se existe:
-   PR.md
-
-9. Verifique se os testes executam:
-   dotnet build EasyMeet.sln
-   dotnet test EasyMeet.sln
-
-10. Gere instruções finais para:
-    - abrir Pull Request;
-    - validar GitHub Actions;
-    - confirmar execução automática dos testes.
-
-11. Utilizar o conteúdo do arquivo PR.md como descrição do Pull Request.
-
-Não faça merge automaticamente.
-O Pull Request deve permanecer OPEN.
-
-## 14. Requisito: Cobertura Mínima de Testes - 30%
-### Prompt
-Atualize as políticas de contribuição para exigir cobertura mínima de testes automatizados de 30% antes de aprovação e merge de Pull Requests.
-
-## Obrigatoriedade
-Todo Pull Request deve atender a uma cobertura mínima de **30%** de testes automatizados antes de ser aprovado e mesclado.
-
-## O que é considerado
-- Testes unitários (xUnit, NUnit, MSTest, etc.)
-- Testes de integração
-- Testes que validem o comportamento da funcionalidade
-- Linhas de código executadas durante a execução dos testes
-
-## O que não é considerado
-- Código comentado
-- Métodos que apenas delegam responsabilidades sem lógica
-- Arquivos de configuração
-
-## Validação
-A cobertura será verificada através do relatório `coverage.opencover.xml` gerado pela execução dos testes:
-
-```powershell
-dotnet test --collect:"XPlat Code Coverage"
-```
-
-## 15. Criar testes de integração com WebApplicationFactory
-### Prompt
-Criar testes de integração com WebApplicationFactory para validar o pipeline HTTP completo.
-
-Adicionar casos de teste para:
-- resposta do controlador;
-- fallback local.
-
-Expandir CI para executar esses testes e manter o limite de cobertura.
-
-Requisitos:
-- usar `Microsoft.AspNetCore.Mvc.Testing`;
-- validar o endpoint `POST /api/reunioes/analisar`;
-- substituir dependências externas por fakes/mocks nos testes;
-- evitar chamadas reais para provedores de IA;
-- garantir que o pipeline HTTP completo execute controller, model binding, serialização e DI;
-- manter o gate mínimo de cobertura de 30%;
-- garantir execução via GitHub Actions;
-- rodar `dotnet test` com coleta de cobertura.
