@@ -107,3 +107,5 @@ app.MapGet("/health", () => Results.Ok(new { status = "ok", service = "EasyMeet.
 app.MapControllers();
 
 app.Run();
+
+public partial class Program;
