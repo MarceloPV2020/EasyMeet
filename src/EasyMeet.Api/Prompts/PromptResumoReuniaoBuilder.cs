@@ -53,6 +53,6 @@ public sealed class PromptResumoReuniaoBuilder(ILogger<PromptResumoReuniaoBuilde
             nivelConfianca = 0.0
         });
 
-        return $"Retorne apenas JSON válido neste formato: {schema}. Idioma: pt-BR. Transcrição: {{TRANSCRICAO}}";
+        return $"Retorne apenas JSON válido neste formato: {schema}. Idioma: pt-BR. Transcrição: {{{{TRANSCRICAO}}}}";
     }
 }

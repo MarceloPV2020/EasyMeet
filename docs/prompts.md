@@ -669,3 +669,23 @@ A cobertura será verificada através do relatório `coverage.opencover.xml` ger
 ```powershell
 dotnet test --collect:"XPlat Code Coverage"
 ```
+
+## 15. Criar testes de integração com WebApplicationFactory
+### Prompt
+Criar testes de integração com WebApplicationFactory para validar o pipeline HTTP completo.
+
+Adicionar casos de teste para:
+- resposta do controlador;
+- fallback local.
+
+Expandir CI para executar esses testes e manter o limite de cobertura.
+
+Requisitos:
+- usar `Microsoft.AspNetCore.Mvc.Testing`;
+- validar o endpoint `POST /api/reunioes/resumir`;
+- substituir dependências externas por fakes/mocks nos testes;
+- evitar chamadas reais para provedores de IA;
+- garantir que o pipeline HTTP completo execute controller, model binding, serialização e DI;
+- manter o gate mínimo de cobertura de 30%;
+- garantir execução via GitHub Actions;
+- rodar `dotnet test` com coleta de cobertura.
