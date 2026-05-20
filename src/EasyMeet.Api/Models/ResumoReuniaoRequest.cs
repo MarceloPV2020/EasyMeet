@@ -1,15 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace EasyMeet.Api.Models;
 
-/// <summary>
-/// Requisição contendo texto de reunião para análise.
-/// </summary>
 public sealed class ResumoReuniaoRequest
 {
-    /// <summary>
-    /// Texto integral da reunião a ser analisado pela IA.
-    /// </summary>
-    [Required(ErrorMessage = "O campo texto é obrigatório.")]
-    public string Texto { get; init; } = string.Empty;
+    [Required(ErrorMessage = "O campo transcricao e obrigatorio.")]
+    public string Transcricao { get; init; } = string.Empty;
+
+    [Required]
+    public ProvedorIA ProvedorIA { get; init; } = ProvedorIA.Gemini;
+
+    public ConfiguracaoAnaliseIA? ConfiguracaoIA { get; init; }
 }

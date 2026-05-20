@@ -3,29 +3,41 @@ using EasyMeet.Api.Prompts;
 
 namespace EasyMeet.Api.Services;
 
-/// <summary>
-/// Servico de orquestracao de resumo de reuniao com IA.
-/// </summary>
 public sealed class AgenteResumoReuniaoService(
     PromptResumoReuniaoBuilder promptBuilder,
-    GeminiClientService geminiClientService) : IAgenteResumoReuniaoService
+    IApiKeyStore apiKeyStore,
+    IAProviderFactory providerFactory,
+    MeetingAnalysisParser parser) : IAgenteResumoReuniaoService
 {
-    /// <inheritdoc />
-    public async Task<ResumoReuniaoResponse> ResumirAsync(string texto, CancellationToken cancellationToken = default)
+    public async Task<ResumoReuniaoResponse> ResumirAsync(
+        string transcricao,
+        ProvedorIA provedorIA,
+        ConfiguracaoAnaliseIA? configuracaoIA = null,
+        CancellationToken cancellationToken = default)
     {
-        var prompt = await promptBuilder.BuildAsync(texto, cancellationToken);
-        var iaResult = await geminiClientService.TryGerarResumoAsync(prompt, cancellationToken);
+        var apiKey = await apiKeyStore.GetApiKeyAsync(provedorIA, cancellationToken);
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            throw new InvalidOperationException("Chave de API nao configurada para o provedor selecionado.");
+        }
+
+        var provider = providerFactory.GetClient(provedorIA);
+        var prompt = await promptBuilder.BuildAsync(transcricao, cancellationToken);
+        var rawContent = await provider.GerarConteudoAsync(prompt, apiKey, configuracaoIA, cancellationToken);
+        var parsed = parser.ParseOrThrow(rawContent);
 
         return new ResumoReuniaoResponse
         {
-            Resumo = iaResult!.Resumo,
-            TopicosPrincipais = iaResult.TopicosPrincipais,
-            Acoes = iaResult.Acoes,
-            Responsaveis = iaResult.Responsaveis,
-            TipoReuniao = iaResult.TipoReuniao,
-            NivelConfianca = iaResult.NivelConfianca,
+            Resumo = parsed.Resumo,
+            TopicosPrincipais = parsed.TopicosPrincipais,
+            Acoes = parsed.Acoes,
+            Responsaveis = parsed.Responsaveis,
+            Decisoes = parsed.Decisoes,
+            Pendencias = parsed.Pendencias,
+            TipoReuniao = parsed.TipoReuniao,
+            NivelConfianca = parsed.NivelConfianca,
             GeradoPorIA = true,
-            ModoExecucao = "gemini"
+            ModoExecucao = provedorIA.ToString()
         };
     }
 }

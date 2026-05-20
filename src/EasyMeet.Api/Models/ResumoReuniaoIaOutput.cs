@@ -18,12 +18,22 @@ public sealed class ResumoReuniaoIaOutput
     /// <summary>
     /// Ações identificadas.
     /// </summary>
-    public IReadOnlyList<string> Acoes { get; init; } = [];
+    public IReadOnlyList<AcaoReuniaoItem> Acoes { get; init; } = [];
 
     /// <summary>
     /// Responsáveis identificados.
     /// </summary>
     public IReadOnlyList<string> Responsaveis { get; init; } = [];
+
+    /// <summary>
+    /// Decisões tomadas na reunião.
+    /// </summary>
+    public IReadOnlyList<string> Decisoes { get; init; } = [];
+
+    /// <summary>
+    /// Pendências identificadas.
+    /// </summary>
+    public IReadOnlyList<string> Pendencias { get; init; } = [];
 
     /// <summary>
     /// Classificação do tipo de reunião.
