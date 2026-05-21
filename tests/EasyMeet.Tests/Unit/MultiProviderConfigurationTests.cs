@@ -13,7 +13,7 @@ public sealed class MultiProviderConfigurationTests
         ProvedorIA.Anthropic,
         ProvedorIA.Mistral,
         ProvedorIA.Cohere,
-        ProvedorIA.AzureOpenAI
+        ProvedorIA.OpenRouter
     ];
 
     [Fact]

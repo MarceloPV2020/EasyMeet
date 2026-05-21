@@ -790,37 +790,229 @@ Não quebrar nenhum endpoint existente.
 Não alterar contratos da API.
 Melhorar apenas UX/UI e organização visual.
 
-## 12. Revisão final da atividade
+## 12. Revisão final da documentação
 ### Prompt
-Revise todo o projeto EasyMeet considerando os requisitos da atividade acadêmica.
+Revise completamente toda a documentação do projeto EasyMeet para deixá-la profissional, consistente, organizada e alinhada ao estado atual da aplicação.
 
-Verifique:
+IMPORTANTE:
+Contexto atual do projeto:
+
+O EasyMeet é uma plataforma inteligente de análise de reuniões baseada em IA.
+
+A aplicação já está funcional e possui:
+
+- suporte a múltiplos provedores de IA;
+- seleção dinâmica da IA pelo usuário;
+- integração com:
+  - OpenRouter
+  - Gemini
+  - Grok
+  - Mistral
+  - outros providers já implementados;
+- análise inteligente de reuniões;
+- geração de resumo executivo;
+- extração de tópicos principais;
+- extração de ações;
+- identificação de responsáveis;
+- decisões tomadas;
+- pendências;
+- classificação automática da reunião;
+- histórico persistido das análises;
+- visualização do histórico;
+- exportação PDF;
+- Swagger funcional;
+- interface web moderna;
+- testes automatizados;
+- GitHub Actions;
+- Pull Request template;
+- arquitetura organizada;
+- integração real com LLMs.
+
+Objetivo:
+
+Revisar e melhorar TODA a documentação do projeto para nível profissional/acadêmico.
+
+Arquivos que devem ser revisados e atualizados:
+
 - README.md
-- PRD.md
-- VIABILIDADE.md
-- BACKLOG.md
-- UML.md
-- ADR.md
-- DIRETRIZES_IA.md
-- prompts.md
-- Swagger funcionando
-- integração Gemini funcionando
-- agente de IA explícito
-- fallback local funcionando
-- pelo menos 5 testes automatizados
-- arquitetura organizada
-- Pull Request template criado
-- documentação completa
-- user stories
-- diagramas UML
-- interface web funcionando
+- docs/PRD.md
+- docs/VIABILIDADE.md
+- docs/ADR.md
+- docs/BACKLOG.md
+- docs/UML.md
+- docs/DIRETRIZES_IA.md
+- PR.md
 
-Corrija automaticamente qualquer problema encontrado.
+NÃO ALTERAR:
+- docs/prompts.md
 
-Depois informe:
-- quais requisitos foram atendidos;
-- o que ainda falta;
-- comandos finais para:
-  - dotnet build
-  - dotnet test
-  - dotnet run
+Requisitos gerais:
+
+1. Garantir consistência entre todos os documentos.
+2. Remover informações antigas ou desatualizadas.
+3. Atualizar documentação conforme o estado REAL atual do sistema.
+4. Melhorar clareza técnica e organização.
+5. Deixar linguagem profissional.
+6. Melhorar estrutura visual markdown.
+7. Melhorar títulos, subtítulos e seções.
+8. Garantir coerência entre backlog, PRD e arquitetura.
+9. Garantir que o README represente corretamente a aplicação final.
+10. Garantir que a documentação evidencie claramente o uso de IA no produto.
+
+Requisitos específicos:
+
+README.md
+- descrição clara do projeto;
+- objetivo da aplicação;
+- funcionalidades principais;
+- arquitetura resumida;
+- tecnologias utilizadas;
+- providers IA suportados;
+- OpenRouter;
+- Gemini;
+- Grok;
+- Mistral;
+- demais providers implementados;
+- como executar;
+- como configurar providers;
+- como configurar API Keys;
+- como rodar testes;
+- como funciona a análise;
+- screenshots/seções visuais;
+- integração IA;
+- GitHub Actions;
+- estrutura de pastas;
+- roadmap futuro;
+- melhorias futuras.
+
+PRD.md
+- visão do produto;
+- problema resolvido;
+- público-alvo;
+- funcionalidades;
+- requisitos funcionais;
+- requisitos não funcionais;
+- fluxo do usuário;
+- integração IA;
+- arquitetura multi-provider;
+- regras de negócio;
+- MVP;
+- futuras evoluções.
+
+VIABILIDADE.md
+- viabilidade técnica;
+- limitações;
+- custos;
+- desafios;
+- vantagens do OpenRouter;
+- vantagens dos providers diretos;
+- benefícios da arquitetura multi-provider;
+- vantagens do uso de IA;
+- pontos futuros;
+- riscos técnicos;
+- justificativas arquiteturais.
+
+ADR.md
+Documentar decisões arquiteturais:
+- uso de múltiplos providers;
+- uso de OpenRouter;
+- manutenção de providers diretos;
+- uso de ASP.NET Core;
+- separação de providers;
+- arquitetura desacoplada;
+- persistência do histórico;
+- exportação PDF;
+- uso de GitHub Actions;
+- arquitetura escolhida;
+- motivos técnicos;
+- trade-offs.
+
+BACKLOG.md
+Reorganizar backlog profissionalmente:
+- MVP concluído;
+- funcionalidades implementadas;
+- backlog futuro;
+- melhorias IA;
+- UX/UI;
+- integrações futuras;
+- segurança;
+- analytics;
+- login/autenticação;
+- upload de áudio;
+- transcrição automática;
+- exportação avançada;
+- dashboard;
+- colaboração;
+- comparação entre modelos IA;
+- métricas de custo/token.
+
+UML.md
+Atualizar diagramas:
+- arquitetura geral;
+- fluxo da análise;
+- providers IA;
+- OpenRouter;
+- providers diretos;
+- histórico;
+- exportação PDF;
+- controllers/services;
+- relacionamento das entidades;
+- fluxo multi-provider.
+
+Usar:
+- Mermaid
+- diagramas limpos
+- organização visual profissional
+
+DIRETRIZES_IA.md
+Documentar:
+- funcionamento da IA;
+- OpenRouter;
+- providers diretos;
+- seleção dinâmica de IA;
+- engenharia de prompt;
+- limitações dos LLMs;
+- tratamento de erros;
+- custo/token;
+- temperatura;
+- contexto;
+- segurança;
+- privacidade;
+- uso responsável da IA;
+- fallback entre providers;
+- diferenças entre modelos.
+
+PR.md
+Atualizar template:
+- múltiplos providers;
+- histórico;
+- PDF;
+- IA;
+- testes;
+- checklist técnico;
+- checklist documentação;
+- checklist arquitetura.
+
+Importante:
+
+1. NÃO inventar funcionalidades inexistentes.
+2. Basear toda documentação no código atual.
+3. Melhorar qualidade profissional da documentação.
+4. Garantir documentação pronta para entrega acadêmica e portfólio.
+5. Melhorar markdown visualmente.
+6. Manter coerência entre todos os documentos.
+7. Criar aparência de projeto SaaS profissional.
+8. Destacar claramente o papel da IA no produto.
+9. Destacar arquitetura multi-provider.
+10. Destacar coexistência entre:
+- OpenRouter
+- providers diretos
+11. Destacar engenharia de software aplicada no projeto.
+
+Ao final:
+- revisar inconsistências;
+- revisar links;
+- revisar markdown;
+- revisar títulos;
+- revisar ortografia;
+- revisar estrutura dos documentos.

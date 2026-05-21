@@ -80,11 +80,6 @@
         { value: "command-a-03-2025", label: "command-a-03-2025" },
         { value: "command-r-08-2024", label: "command-r-08-2024" }
       ],
-      AzureOpenAI: [
-        { value: "", label: "Padrão do provedor (deployment configurado)" },
-        { value: "gpt-4.1-mini", label: "gpt-4.1-mini (deployment)" },
-        { value: "gpt-4.1", label: "gpt-4.1 (deployment)" }
-      ],
       OpenRouter: [
         { value: "", label: "Padrão do provedor (google/gemini-2.5-flash)" },
         { value: "google/gemini-2.5-flash", label: "google/gemini-2.5-flash" },
@@ -127,7 +122,6 @@
       Anthropic: 1024,
       Mistral: 1024,
       Cohere: 1024,
-      AzureOpenAI: 1024,
       OpenRouter: 1024
     };
     const temperaturaPadraoPorProvedor = {
@@ -137,7 +131,6 @@
       Anthropic: 0.2,
       Mistral: 0.2,
       Cohere: 0.2,
-      AzureOpenAI: 0.2,
       OpenRouter: 0.2
     };
     const providerApiLinks = {
@@ -147,7 +140,6 @@
       Anthropic: "https://console.anthropic.com/settings/keys",
       Mistral: "https://console.mistral.ai/api-keys/",
       Cohere: "https://dashboard.cohere.com/api-keys",
-      AzureOpenAI: "https://portal.azure.com/",
       OpenRouter: "https://openrouter.ai/workspaces/default/keys"
     };
 
@@ -1311,3 +1303,6 @@
     }
 
     bootstrap().catch(err => showToast(err.message || "Falha na inicialização.", true));
+
+
+

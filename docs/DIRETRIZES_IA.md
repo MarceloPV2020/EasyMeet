@@ -1,16 +1,69 @@
 # Diretrizes de IA - EasyMeet
 
 ## Objetivo
-Definir regras de uso, segurança e qualidade para as respostas geradas por IA no EasyMeet.
 
-## Princípios
-- Toda análise válida deve usar IA real.
-- Não existe fallback local para gerar resumo, ações ou decisões.
-- A IA deve trabalhar apenas com informações presentes na transcrição.
-- O resultado deve ser objetivo, corporativo e diretamente utilizável.
-- A resposta precisa ser JSON válido e aderente ao schema esperado.
+Definir regras de comportamento, qualidade, segurança e operação para o uso de IA no EasyMeet.
 
-## Schema esperado
+## Papel da IA
+
+A IA é um componente funcional do produto. Ela não é apenas uma ferramenta auxiliar de desenvolvimento: o sistema depende dela para interpretar transcrições e gerar informações estruturadas.
+
+A IA deve:
+
+- resumir a reunião;
+- identificar tópicos principais;
+- extrair ações;
+- identificar responsáveis;
+- registrar decisões tomadas;
+- apontar pendências;
+- classificar o tipo de reunião;
+- estimar nível de confiança.
+
+## Providers
+
+O EasyMeet usa arquitetura multi-provider.
+
+Providers implementados:
+
+- OpenRouter
+- Gemini
+- Groq
+- OpenAI
+- Anthropic
+- Mistral
+- Cohere
+
+OpenRouter permite acessar vários modelos por uma única API. Providers diretos permanecem disponíveis para controle oficial, comparação técnica e redução de dependência de agregadores.
+
+## Seleção Dinâmica
+
+O usuário escolhe o provider antes da análise. Opcionalmente também escolhe:
+
+- modelo;
+- temperatura;
+- máximo de tokens.
+
+Quando o usuário informa um modelo, o sistema executa exatamente aquele modelo. Quando não informa, o provider usa seu padrão configurado.
+
+## Sem Fallback Automático
+
+O EasyMeet não troca automaticamente de provider ou modelo quando ocorre erro. Essa decisão preserva previsibilidade e rastreabilidade.
+
+Se um modelo falhar, a interface informa o erro e o usuário pode selecionar outro modelo manualmente.
+
+## Prompt Engineering
+
+O prompt deve:
+
+- instruir a IA a retornar somente JSON;
+- reforçar que informações ausentes não devem ser inventadas;
+- exigir campos obrigatórios;
+- orientar formato de ações, responsáveis, decisões e pendências;
+- usar linguagem objetiva e profissional;
+- evitar markdown, explicações extras ou texto fora do JSON.
+
+## Schema Esperado
+
 ```json
 {
   "resumo": "",
@@ -25,38 +78,81 @@ Definir regras de uso, segurança e qualidade para as respostas geradas por IA n
   "responsaveis": [],
   "decisoesTomadas": [],
   "pendencias": [],
+  "dataReuniao": "",
   "tipoReuniao": "",
   "nivelConfianca": 0.0
 }
 ```
 
-## Compatibilidade mantida
-- O parser ainda aceita `decisoes` como alternativa legada a `decisoesTomadas`.
-- O parser ainda normaliza `acoes` em formato de texto simples, quando recebido de provedores menos aderentes ao prompt.
+O parser também aceita `decisoes` como alternativa legada a `decisoesTomadas`.
 
-## Regras de geração
-- Retornar somente JSON, sem markdown e sem texto adicional.
-- Consolidar ações duplicadas.
-- Destacar decisões tomadas de forma objetiva.
-- Identificar responsáveis quando houver evidência na transcrição.
-- Marcar pendências sem inventar prazos ou responsáveis.
-- Classificar o tipo de reunião com linguagem clara.
-- Informar `nivelConfianca` entre `0.0` e `1.0`.
+## Regras de Qualidade
 
-## Configurações de inferência
-- `modelo`: define o modelo/deployment usado no provedor selecionado.
-- `temperatura`: controla variação da resposta.
-- `maxTokens`: limita o tamanho máximo da resposta.
-- Quando uma configuração não é informada, o provedor usa o padrão definido no backend.
-- A aplicação não troca automaticamente de modelo quando ocorre erro.
+- Resumo deve ser fiel ao conteúdo da transcrição.
+- Tópicos devem representar temas realmente discutidos.
+- Ações devem ser objetivas e executáveis.
+- Responsáveis devem ser indicados apenas quando houver evidência.
+- Prazos não devem ser inventados.
+- Decisões devem ser separadas de pendências.
+- Nível de confiança deve ficar entre `0.0` e `1.0`.
 
-## Segurança
-- Nunca registrar API key em log.
-- Nunca retornar API key em resposta de endpoint.
-- Nunca persistir API key em arquivos de configuração, arquivos temporários ou repositório.
-- Usar Windows Credential Manager como mecanismo oficial de armazenamento local.
+## Diferenças Entre Modelos
 
-## Tratamento de erros
-- Exibir mensagem amigável para o usuário final.
-- Preservar detalhe técnico quando o provedor retornar uma mensagem útil.
-- Tratar explicitamente casos como chave expirada, quota excedida, limite de requisições, modelo inválido, modelo descontinuado e indisponibilidade temporária.
+Embora todos usem o mesmo contrato da aplicação, modelos podem variar em:
+
+- aderência ao JSON;
+- qualidade do resumo;
+- capacidade de extrair ações;
+- limite de contexto;
+- custo;
+- latência;
+- disponibilidade por chave;
+- sensibilidade a temperatura.
+
+## Temperatura
+
+Temperatura baixa é recomendada para análise de reuniões, pois favorece consistência e reduz invenções. O padrão recomendado é `0.2`.
+
+## MaxTokens
+
+`maxTokens` controla o tamanho máximo da resposta. Valores maiores podem ajudar em reuniões longas, mas também aumentam custo e risco de exceder limites do provider. O padrão recomendado é `1024`.
+
+## Contexto
+
+O modelo deve analisar apenas o texto recebido na transcrição. Informações externas, suposições e inferências sem base devem ser evitadas.
+
+## Privacidade e Segurança
+
+- API keys não devem ser registradas em logs.
+- API keys não devem ser salvas em arquivos do repositório.
+- API keys não devem trafegar no payload de análise.
+- Transcrições podem conter dados sensíveis e devem ser tratadas com cuidado.
+- O usuário deve revisar o resultado antes de usar como documento oficial.
+
+## Tratamento de Erros
+
+Erros comuns:
+
+- chave ausente;
+- chave inválida;
+- quota excedida;
+- limite de requisições;
+- modelo indisponível;
+- modelo descontinuado;
+- JSON inválido retornado pelo modelo;
+- timeout;
+- instabilidade temporária do provider.
+
+A interface deve exibir mensagem amigável e preservar detalhe técnico útil quando disponível.
+
+## Uso Responsável
+
+O EasyMeet deve apoiar o usuário, não substituir revisão humana. Resultados de IA podem conter erros, omissões ou interpretações imperfeitas. Decisões importantes devem ser validadas por uma pessoa.
+
+## Recomendações Operacionais
+
+- Usar modelos mais consistentes para atas e decisões.
+- Preferir temperatura baixa.
+- Reduzir `maxTokens` em testes de custo.
+- Trocar manualmente de modelo quando houver erro de disponibilidade.
+- Evitar enviar dados sigilosos para providers externos sem política adequada.
