@@ -376,6 +376,24 @@
         confidence.className = "history-confidence";
         confidence.textContent = `Confiança ${formatConfianca(reuniao.confianca)}`;
 
+        const pdfButton = document.createElement("button");
+        pdfButton.type = "button";
+        pdfButton.className = "history-pdf";
+        pdfButton.textContent = "Gerar PDF";
+        pdfButton.title = "Gerar PDF deste registro";
+        pdfButton.addEventListener("click", () => gerarPdfAnalise(reuniao));
+
+        const removeButton = document.createElement("button");
+        removeButton.type = "button";
+        removeButton.className = "history-remove";
+        removeButton.textContent = "Excluir registro";
+        removeButton.title = "Excluir este registro do histórico";
+        removeButton.addEventListener("click", () => removerHistorico(reuniao.id));
+
+        const historyActions = document.createElement("div");
+        historyActions.className = "history-actions";
+        historyActions.append(pdfButton, removeButton);
+
         const summary = document.createElement("p");
         summary.className = "history-summary";
         summary.textContent = reuniao.resumo || "Resumo não informado";
@@ -424,11 +442,42 @@
         transcription.className = "history-transcription";
         transcription.textContent = reuniao.transcricao || "Transcrição não informada";
 
-        head.append(title, confidence);
+        head.append(title, confidence, historyActions);
         transcriptionDetails.append(detailsSummary, transcription);
         item.append(head, summary, meta, analysisDetails, transcriptionDetails);
         historicoListEl.appendChild(item);
       });
+    }
+
+    async function removerHistorico(id) {
+      if (!id) {
+        showToast("Registro inválido para remoção.", true);
+        return;
+      }
+
+      const confirmado = window.confirm("Excluir este registro do histórico?");
+      if (!confirmado) {
+        return;
+      }
+
+      try {
+        const resp = await fetch(`/api/reunioes/${id}`, { method: "DELETE" });
+        if (!resp.ok && resp.status !== 204) {
+          let message = "Não foi possível remover o registro.";
+          try {
+            const payload = await resp.json();
+            message = payload.mensagem || payload.detail || message;
+          } catch {}
+
+          throw new Error(message);
+        }
+
+        historicoOriginal = historicoOriginal.filter(reuniao => reuniao.id !== id);
+        aplicarFiltrosHistorico();
+        showToast("Registro excluído do histórico.");
+      } catch (err) {
+        showToast(err.message || "Falha ao remover registro do histórico.", true);
+      }
     }
 
     async function fetchHistorico(showLoading = true) {
@@ -723,6 +772,110 @@
       tipoReuniaoEl.className = "value muted";
       confiancaEl.textContent = "-";
       confiancaEl.className = "value muted";
+    }
+
+    function addPdfText(doc, text, x, y, maxWidth, lineHeight) {
+      const lines = doc.splitTextToSize(text || "Não informado", maxWidth);
+      lines.forEach(line => {
+        if (y > 276) {
+          doc.addPage();
+          y = 22;
+        }
+
+        doc.text(line, x, y);
+        y += lineHeight;
+      });
+
+      return y;
+    }
+
+    function addPdfSection(doc, title, content, y) {
+      if (y > 258) {
+        doc.addPage();
+        y = 22;
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(11);
+      doc.setTextColor(15, 23, 42);
+      doc.text(title, 18, y);
+      y += 7;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      doc.setTextColor(51, 65, 85);
+      return addPdfText(doc, content, 18, y, 174, 5) + 4;
+    }
+
+    function formatPdfList(items) {
+      if (!Array.isArray(items) || items.length === 0) {
+        return "Não identificado";
+      }
+
+      return items.map(item => `• ${item}`).join("\n");
+    }
+
+    function formatPdfActions(actions) {
+      if (!Array.isArray(actions) || actions.length === 0) {
+        return "Não identificado";
+      }
+
+      return actions.map((item, index) => {
+        const descricao = item?.descricao || "Sem descrição";
+        const responsavel = item?.responsavel || "Não identificado";
+        const prazo = item?.prazo ? ` | Prazo: ${item.prazo}` : "";
+        return `${index + 1}. ${descricao}\n   Responsável: ${responsavel}${prazo}`;
+      }).join("\n");
+    }
+
+    function gerarPdfAnalise(analysis) {
+      if (!analysis) {
+        showToast("Registro inválido para geração do PDF.", true);
+        return;
+      }
+
+      const jsPdf = window.jspdf?.jsPDF;
+      if (!jsPdf) {
+        showToast("Não foi possível carregar o gerador de PDF. Verifique a conexão com a internet e tente novamente.", true);
+        return;
+      }
+
+      const doc = new jsPdf({ unit: "mm", format: "a4" });
+      const generatedAt = new Date().toLocaleString("pt-BR");
+
+      doc.setFillColor(239, 246, 255);
+      doc.rect(0, 0, 210, 32, "F");
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.setTextColor(15, 23, 42);
+      doc.text("EasyMeet", 18, 17);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(71, 85, 105);
+      doc.text("Relatório executivo de análise inteligente de reunião", 18, 25);
+
+      let y = 44;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Gerado em: ${generatedAt}`, 18, y);
+      y += 6;
+      doc.text(`IA utilizada: ${analysis.modoExecucao || "Não informada"}`, 18, y);
+      y += 6;
+      doc.text(`Data da reunião: ${formatDataReuniao(analysis.dataReuniao)}`, 18, y);
+      y += 6;
+      doc.text(`Tipo: ${analysis.tipoReuniao || "Não informado"} | Confiança: ${formatConfianca(analysis.nivelConfianca)}`, 18, y);
+      y += 10;
+
+      y = addPdfSection(doc, "Resumo executivo", analysis.resumo, y);
+      y = addPdfSection(doc, "Tópicos principais", formatPdfList(analysis.topicosPrincipais), y);
+      y = addPdfSection(doc, "Ações", formatPdfActions(analysis.acoes), y);
+      y = addPdfSection(doc, "Responsáveis", formatPdfList(analysis.responsaveis), y);
+      y = addPdfSection(doc, "Decisões", formatPdfList(analysis.decisoes), y);
+      addPdfSection(doc, "Pendências", formatPdfList(analysis.pendencias), y);
+
+      const dateSuffix = (analysis.dataReuniao || new Date().toISOString().slice(0, 10)).replaceAll("-", "");
+      doc.save(`easymeet-analise-${dateSuffix}.pdf`);
     }
 
     function updateProviderStatusChip() {

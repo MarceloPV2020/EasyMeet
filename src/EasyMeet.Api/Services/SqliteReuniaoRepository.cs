@@ -173,6 +173,19 @@ public sealed class SqliteReuniaoRepository : IReuniaoRepository
         return reunioes;
     }
 
+    public async Task<bool> RemoverAsync(int id, CancellationToken cancellationToken = default)
+    {
+        await using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = "DELETE FROM Reuniao WHERE ID = $id;";
+        command.Parameters.Add(CreateParameter(command, "$id", id, DbType.Int32));
+
+        var affectedRows = await command.ExecuteNonQueryAsync(cancellationToken);
+        return affectedRows > 0;
+    }
+
     private static async Task EnsureColumnAsync(
         SqliteConnection connection,
         string columnName,

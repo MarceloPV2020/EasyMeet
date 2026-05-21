@@ -29,6 +29,28 @@ public sealed class ReunioesController(
     }
 
     /// <summary>
+    /// Remove uma reuniao do historico local.
+    /// </summary>
+    [HttpDelete("{id:int}")]
+    [HttpDelete("/reunioes/{id:int}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> RemoverAsync([FromRoute] int id, CancellationToken cancellationToken)
+    {
+        if (id <= 0)
+        {
+            return BadRequest(new { mensagem = "O identificador da reuniao deve ser maior que zero." });
+        }
+
+        var removed = await reuniaoRepository.RemoverAsync(id, cancellationToken);
+        return removed
+            ? NoContent()
+            : NotFound(new { mensagem = "Registro do historico nao encontrado." });
+    }
+
+    /// <summary>
     /// Recebe o texto de uma reuniao e retorna uma analise estruturada gerada por IA.
     /// </summary>
     [HttpPost("analisar")]

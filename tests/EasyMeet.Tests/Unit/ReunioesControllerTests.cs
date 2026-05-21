@@ -133,6 +133,48 @@ public sealed class ReunioesControllerTests
     }
 
     [Fact]
+    public async Task RemoverAsync_DeveRetornarNoContent_QuandoRegistroExiste()
+    {
+        var repository = new InMemoryReuniaoRepository();
+        var id = await repository.AdicionarAsync(new Reuniao
+        {
+            Transcricao = "Transcricao salva",
+            Resumo = "Resumo salvo",
+            Confianca = 0.7m
+        });
+        var controller = new ReunioesController(new FakeAgenteResumoReuniaoService(), repository);
+
+        var result = await controller.RemoverAsync(id, CancellationToken.None);
+
+        Assert.IsType<NoContentResult>(result);
+        Assert.Empty(repository.Reunioes);
+    }
+
+    [Fact]
+    public async Task RemoverAsync_DeveRetornarNotFound_QuandoRegistroNaoExiste()
+    {
+        var controller = new ReunioesController(
+            new FakeAgenteResumoReuniaoService(),
+            new InMemoryReuniaoRepository());
+
+        var result = await controller.RemoverAsync(999, CancellationToken.None);
+
+        Assert.IsType<NotFoundObjectResult>(result);
+    }
+
+    [Fact]
+    public async Task RemoverAsync_DeveRetornarBadRequest_QuandoIdInvalido()
+    {
+        var controller = new ReunioesController(
+            new FakeAgenteResumoReuniaoService(),
+            new InMemoryReuniaoRepository());
+
+        var result = await controller.RemoverAsync(0, CancellationToken.None);
+
+        Assert.IsType<BadRequestObjectResult>(result);
+    }
+
+    [Fact]
     public async Task ResumirAsync_DeveRetornarBadRequest_QuandoServiceLancaInvalidOperation()
     {
         var controller = new ReunioesController(
@@ -219,6 +261,12 @@ public sealed class ReunioesControllerTests
         public Task<IReadOnlyList<Reuniao>> ListarAsync(CancellationToken cancellationToken = default)
         {
             return Task.FromResult<IReadOnlyList<Reuniao>>(Reunioes);
+        }
+
+        public Task<bool> RemoverAsync(int id, CancellationToken cancellationToken = default)
+        {
+            var removed = Reunioes.RemoveAll(reuniao => reuniao.Id == id) > 0;
+            return Task.FromResult(removed);
         }
     }
 }

@@ -148,6 +148,50 @@ public sealed class SqliteReuniaoRepositoryTests
         }
     }
 
+    [Fact]
+    public async Task Repositorio_DeveRemoverReuniaoPorId()
+    {
+        var tempDirectory = Path.Combine(Path.GetTempPath(), "EasyMeetTests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDirectory);
+
+        try
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:EasyMeet"] = "Data Source=easymeet-test.db"
+                })
+                .Build();
+            var repository = new SqliteReuniaoRepository(configuration, new FakeWebHostEnvironment
+            {
+                ContentRootPath = tempDirectory
+            });
+
+            await repository.InicializarAsync();
+            var id = await repository.AdicionarAsync(new Reuniao
+            {
+                Transcricao = "Transcricao para remover",
+                Resumo = "Resumo para remover",
+                Confianca = 0.8m
+            });
+
+            var removed = await repository.RemoverAsync(id);
+            var removedAgain = await repository.RemoverAsync(id);
+
+            Assert.True(removed);
+            Assert.False(removedAgain);
+            Assert.Empty(await repository.ListarAsync());
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (Directory.Exists(tempDirectory))
+            {
+                Directory.Delete(tempDirectory, recursive: true);
+            }
+        }
+    }
+
     private sealed class FakeWebHostEnvironment : IWebHostEnvironment
     {
         public string ApplicationName { get; set; } = "EasyMeet.Tests";
