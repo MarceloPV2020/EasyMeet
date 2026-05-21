@@ -53,7 +53,8 @@ public sealed class SqliteReuniaoRepository : IReuniaoRepository
                 TipoReuniao TEXT NOT NULL DEFAULT '',
                 Confianca DECIMAL NOT NULL,
                 GeradoPorIA INTEGER NOT NULL DEFAULT 0,
-                ModoExecucao TEXT NOT NULL DEFAULT ''
+                ModoExecucao TEXT NOT NULL DEFAULT '',
+                ModeloIA TEXT NOT NULL DEFAULT ''
             );
             """;
 
@@ -68,6 +69,7 @@ public sealed class SqliteReuniaoRepository : IReuniaoRepository
         await EnsureColumnAsync(connection, "TipoReuniao", "TEXT NOT NULL DEFAULT ''", cancellationToken);
         await EnsureColumnAsync(connection, "GeradoPorIA", "INTEGER NOT NULL DEFAULT 0", cancellationToken);
         await EnsureColumnAsync(connection, "ModoExecucao", "TEXT NOT NULL DEFAULT ''", cancellationToken);
+        await EnsureColumnAsync(connection, "ModeloIA", "TEXT NOT NULL DEFAULT ''", cancellationToken);
     }
 
     public async Task<int> AdicionarAsync(Reuniao reuniao, CancellationToken cancellationToken = default)
@@ -89,7 +91,8 @@ public sealed class SqliteReuniaoRepository : IReuniaoRepository
                 TipoReuniao,
                 Confianca,
                 GeradoPorIA,
-                ModoExecucao)
+                ModoExecucao,
+                ModeloIA)
             VALUES (
                 $transcricao,
                 $resumo,
@@ -102,7 +105,8 @@ public sealed class SqliteReuniaoRepository : IReuniaoRepository
                 $tipoReuniao,
                 $confianca,
                 $geradoPorIA,
-                $modoExecucao);
+                $modoExecucao,
+                $modeloIA);
 
             SELECT last_insert_rowid();
             """;
@@ -118,6 +122,7 @@ public sealed class SqliteReuniaoRepository : IReuniaoRepository
         command.Parameters.Add(CreateParameter(command, "$confianca", reuniao.Confianca, DbType.Decimal));
         command.Parameters.Add(CreateParameter(command, "$geradoPorIA", reuniao.GeradoPorIA ? 1 : 0, DbType.Int32));
         command.Parameters.Add(CreateParameter(command, "$modoExecucao", reuniao.ModoExecucao));
+        command.Parameters.Add(CreateParameter(command, "$modeloIA", reuniao.ModeloIA));
 
         var id = await command.ExecuteScalarAsync(cancellationToken);
         return Convert.ToInt32(id, CultureInfo.InvariantCulture);
@@ -143,7 +148,8 @@ public sealed class SqliteReuniaoRepository : IReuniaoRepository
                 TipoReuniao,
                 Confianca,
                 GeradoPorIA,
-                ModoExecucao
+                ModoExecucao,
+                ModeloIA
             FROM Reuniao
             ORDER BY ID DESC;
             """;
@@ -166,7 +172,8 @@ public sealed class SqliteReuniaoRepository : IReuniaoRepository
                 TipoReuniao = reader.GetString(9),
                 Confianca = ReadDecimal(reader.GetValue(10)),
                 GeradoPorIA = ReadBoolean(reader.GetValue(11)),
-                ModoExecucao = reader.GetString(12)
+                ModoExecucao = reader.GetString(12),
+                ModeloIA = reader.GetString(13)
             });
         }
 

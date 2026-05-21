@@ -55,3 +55,11 @@ Este documento registra as principais decisões arquiteturais do EasyMeet e o mo
 - Contexto: cada provedor possui modelos e limites diferentes; o usuário precisa ajustar custo, qualidade e tamanho da resposta.
 - Consequências: a UI precisa exibir opções compatíveis por provedor.
 - Consequências: o backend aplica limites seguros antes de chamar cada API externa.
+
+## ADR-008 - Catalogo de modelos com disponibilidade por conta e sem diagnostico dedicado
+- Status: Aceita
+- Decisao: manter endpoint de verificacao de disponibilidade de modelos OpenRouter por chave configurada.
+- Decisao: remover endpoint e UI de diagnostico dedicado para reduzir complexidade operacional.
+- Contexto: a deteccao de disponibilidade resolve o principal problema de modelos com `404 No endpoints found` no OpenRouter.
+- Consequencias: o usuario passa a operar a partir do catalogo filtrado da propria conta.
+- Consequencias: o fluxo de analise fica mais simples e com menos pontos de suporte.

@@ -16,4 +16,5 @@ public sealed class ResumoReuniaoResponse
     public double NivelConfianca { get; init; }
     public bool GeradoPorIA { get; init; }
     public string ModoExecucao { get; init; } = string.Empty;
+    public string ModeloIA { get; init; } = string.Empty;
 }

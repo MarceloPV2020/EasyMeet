@@ -8,5 +8,6 @@ public enum ProvedorIA
     Anthropic = 3,
     Mistral = 4,
     Cohere = 5,
-    AzureOpenAI = 6
+    AzureOpenAI = 6,
+    OpenRouter = 7
 }

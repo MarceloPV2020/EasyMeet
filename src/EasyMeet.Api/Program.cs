@@ -36,6 +36,7 @@ builder.Services.Configure<AnthropicSettings>(builder.Configuration.GetSection(A
 builder.Services.Configure<MistralSettings>(builder.Configuration.GetSection(MistralSettings.SectionName));
 builder.Services.Configure<CohereSettings>(builder.Configuration.GetSection(CohereSettings.SectionName));
 builder.Services.Configure<AzureOpenAISettings>(builder.Configuration.GetSection(AzureOpenAISettings.SectionName));
+builder.Services.Configure<OpenRouterSettings>(builder.Configuration.GetSection(OpenRouterSettings.SectionName));
 builder.Services.AddScoped<PromptResumoReuniaoBuilder>();
 builder.Services.AddScoped<MeetingAnalysisParser>();
 builder.Services.AddScoped<IApiKeyStore, WindowsCredentialApiKeyStore>();
@@ -91,6 +92,13 @@ builder.Services.AddHttpClient<AzureOpenAIClientService>(client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 builder.Services.AddScoped<IGenerativeAIClient>(sp => sp.GetRequiredService<AzureOpenAIClientService>());
+
+builder.Services.AddHttpClient<OpenRouterClientService>(client =>
+{
+    client.BaseAddress = new Uri("https://openrouter.ai/api/");
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+builder.Services.AddScoped<IGenerativeAIClient>(sp => sp.GetRequiredService<OpenRouterClientService>());
 
 var app = builder.Build();
 

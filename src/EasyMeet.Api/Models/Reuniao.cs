@@ -18,4 +18,5 @@ public sealed class Reuniao
     public decimal Confianca { get; init; }
     public bool GeradoPorIA { get; init; }
     public string ModoExecucao { get; init; } = string.Empty;
+    public string ModeloIA { get; init; } = string.Empty;
 }
