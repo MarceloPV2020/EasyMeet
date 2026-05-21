@@ -50,7 +50,8 @@ public sealed class SqliteReuniaoRepositoryTests
                 TipoReuniao = "Planejamento",
                 Confianca = 0.91m,
                 GeradoPorIA = true,
-                ModoExecucao = "Gemini"
+                ModoExecucao = "Gemini",
+                ModeloIA = "gemini-2.5-flash"
             });
 
             var reunioes = await repository.ListarAsync();
@@ -72,6 +73,7 @@ public sealed class SqliteReuniaoRepositoryTests
             Assert.Equal(0.91m, reuniao.Confianca);
             Assert.True(reuniao.GeradoPorIA);
             Assert.Equal("Gemini", reuniao.ModoExecucao);
+            Assert.Equal("gemini-2.5-flash", reuniao.ModeloIA);
         }
         finally
         {
@@ -128,7 +130,8 @@ public sealed class SqliteReuniaoRepositoryTests
                 TipoReuniao = "Status",
                 Confianca = 0.88m,
                 GeradoPorIA = true,
-                ModoExecucao = "Groq"
+                ModoExecucao = "Groq",
+                ModeloIA = "llama-3.1-8b-instant"
             });
 
             var reuniao = Assert.Single(await repository.ListarAsync());
@@ -136,6 +139,7 @@ public sealed class SqliteReuniaoRepositoryTests
             Assert.Equal("2026-05-21", reuniao.DataReuniao);
             Assert.Equal("Status", reuniao.TipoReuniao);
             Assert.Equal("Groq", reuniao.ModoExecucao);
+            Assert.Equal("llama-3.1-8b-instant", reuniao.ModeloIA);
             Assert.True(reuniao.GeradoPorIA);
         }
         finally

@@ -14,7 +14,18 @@ public sealed class MeetingAnalysisParser
             throw new InvalidOperationException("Nao foi possivel extrair JSON valido da resposta da IA.");
         }
 
-        using var doc = JsonDocument.Parse(cleanedJson);
+        JsonDocument doc;
+        try
+        {
+            doc = JsonDocument.Parse(cleanedJson);
+        }
+        catch (JsonException)
+        {
+            throw new InvalidOperationException("A IA retornou JSON invalido ou incompleto. Tente novamente com outro modelo.");
+        }
+
+        using (doc)
+        {
         var root = doc.RootElement;
         if (!HasExpectedShape(root))
         {
@@ -42,6 +53,7 @@ public sealed class MeetingAnalysisParser
             TipoReuniao = NormalizeTipoReuniao(tipoReuniao),
             NivelConfianca = nivelConfianca
         };
+        }
     }
 
     private static IReadOnlyList<AcaoReuniaoItem> ExtractAcoes(JsonElement acoesNode)
@@ -171,13 +183,61 @@ public sealed class MeetingAnalysisParser
         }
 
         var start = cleaned.IndexOf('{');
-        var end = cleaned.LastIndexOf('}');
-        if (start < 0 || end < 0 || end <= start)
+        if (start < 0)
         {
             return null;
         }
 
-        return cleaned[start..(end + 1)];
+        var depth = 0;
+        var inString = false;
+        var escaped = false;
+        for (var i = start; i < cleaned.Length; i++)
+        {
+            var ch = cleaned[i];
+
+            if (inString)
+            {
+                if (escaped)
+                {
+                    escaped = false;
+                    continue;
+                }
+
+                if (ch == '\\')
+                {
+                    escaped = true;
+                    continue;
+                }
+
+                if (ch == '"')
+                {
+                    inString = false;
+                }
+
+                continue;
+            }
+
+            if (ch == '"')
+            {
+                inString = true;
+                continue;
+            }
+
+            if (ch == '{')
+            {
+                depth++;
+            }
+            else if (ch == '}')
+            {
+                depth--;
+                if (depth == 0)
+                {
+                    return cleaned[start..(i + 1)];
+                }
+            }
+        }
+
+        return null;
     }
 
     private static bool HasExpectedShape(JsonElement root)

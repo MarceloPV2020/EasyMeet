@@ -49,6 +49,7 @@ public sealed class AgenteResumoReuniaoServiceTests
         Assert.Equal("Resumo via Groq", result.Resumo);
         Assert.Equal(1, provider.Chamadas);
         Assert.Equal("Groq", result.ModoExecucao);
+        Assert.Equal("llama-3.1-8b-instant", result.ModeloIA);
     }
 
     [Fact]
@@ -71,11 +72,16 @@ public sealed class AgenteResumoReuniaoServiceTests
         """;
 
         var service = CreateService(store, [new FakeProvider(ProvedorIA.Gemini, payload)]);
-        var result = await service.ResumirAsync("Transcricao completa de reuniao.", ProvedorIA.Gemini, cancellationToken: CancellationToken.None);
+        var result = await service.ResumirAsync(
+            "Transcricao completa de reuniao.",
+            ProvedorIA.Gemini,
+            new ConfiguracaoAnaliseIA { Modelo = "gemini-2.0-flash" },
+            CancellationToken.None);
 
         Assert.Equal("Resumo final", result.Resumo);
         Assert.Single(result.Decisoes);
         Assert.Single(result.Pendencias);
+        Assert.Equal("gemini-2.0-flash", result.ModeloIA);
     }
 
     private static AgenteResumoReuniaoService CreateService(IApiKeyStore keyStore, IEnumerable<IGenerativeAIClient> providers)

@@ -1,4 +1,5 @@
 using EasyMeet.Api.Models;
+using EasyMeet.Api.Providers;
 using EasyMeet.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,7 +7,11 @@ namespace EasyMeet.Api.Controllers;
 
 [ApiController]
 [Route("api/ia")]
-public sealed class IAConfigController(ApiKeyManagerService apiKeyManagerService, IAProviderFactory providerFactory) : ControllerBase
+public sealed class IAConfigController(
+    ApiKeyManagerService apiKeyManagerService,
+    IAProviderFactory providerFactory,
+    IApiKeyStore apiKeyStore,
+    OpenRouterClientService openRouterClientService) : ControllerBase
 {
     [HttpGet("provedores")]
     [ProducesResponseType(typeof(IReadOnlyList<ProvedorIAResponse>), StatusCodes.Status200OK)]
@@ -46,4 +51,27 @@ public sealed class IAConfigController(ApiKeyManagerService apiKeyManagerService
         var resultado = await apiKeyManagerService.TestarConexaoDetalhadoAsync(request.ProvedorIA, request.ApiKey, cancellationToken);
         return Ok(resultado);
     }
+
+    [HttpPost("openrouter/modelos/disponibilidade")]
+    [ProducesResponseType(typeof(OpenRouterModelosDisponibilidadeResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> VerificarModelosOpenRouterAsync(
+        [FromBody] OpenRouterModelosDisponibilidadeRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (request.Modelos.Count == 0)
+        {
+            return BadRequest(new { mensagem = "Informe ao menos um modelo para validacao." });
+        }
+
+        var apiKey = await apiKeyStore.GetApiKeyAsync(ProvedorIA.OpenRouter, cancellationToken);
+        if (string.IsNullOrWhiteSpace(apiKey))
+        {
+            return BadRequest(new { mensagem = "Chave de API do OpenRouter nao configurada." });
+        }
+
+        var response = await openRouterClientService.VerificarDisponibilidadeModelosAsync(apiKey, request.Modelos, cancellationToken);
+        return Ok(response);
+    }
+
 }

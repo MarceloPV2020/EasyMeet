@@ -20,6 +20,7 @@
     const providerAnalysisEl = document.getElementById("providerAnalysis");
     const sidebarProvidersEl = document.getElementById("sidebarProviders");
     const providerStatusEl = document.getElementById("providerStatus");
+    const providerApiLinkEl = document.getElementById("providerApiLink");
     const apiKeyEl = document.getElementById("apiKey");
     const transcricaoEl = document.getElementById("transcricao");
     const switchToGroqBtn = document.getElementById("switchToGroq");
@@ -83,6 +84,40 @@
         { value: "", label: "Padrão do provedor (deployment configurado)" },
         { value: "gpt-4.1-mini", label: "gpt-4.1-mini (deployment)" },
         { value: "gpt-4.1", label: "gpt-4.1 (deployment)" }
+      ],
+      OpenRouter: [
+        { value: "", label: "Padrão do provedor (google/gemini-2.5-flash)" },
+        { value: "google/gemini-2.5-flash", label: "google/gemini-2.5-flash" },
+        { value: "google/gemini-2.0-flash-001", label: "google/gemini-2.0-flash-001" },
+        { value: "google/gemini-flash-1.5", label: "google/gemini-flash-1.5" },
+        { value: "google/gemini-pro-1.5", label: "google/gemini-pro-1.5" },
+        { value: "anthropic/claude-3.5-haiku", label: "anthropic/claude-3.5-haiku" },
+        { value: "anthropic/claude-3.5-sonnet", label: "anthropic/claude-3.5-sonnet" },
+        { value: "anthropic/claude-3.7-sonnet", label: "anthropic/claude-3.7-sonnet" },
+        { value: "anthropic/claude-sonnet-4", label: "anthropic/claude-sonnet-4" },
+        { value: "anthropic/claude-3-haiku", label: "anthropic/claude-3-haiku" },
+        { value: "openai/gpt-4.1-mini", label: "openai/gpt-4.1-mini" },
+        { value: "openai/gpt-4o-mini", label: "openai/gpt-4o-mini" },
+        { value: "openai/gpt-4o", label: "openai/gpt-4o" },
+        { value: "openai/gpt-4.1", label: "openai/gpt-4.1" },
+        { value: "mistralai/mistral-small-3.2-24b-instruct", label: "mistralai/mistral-small-3.2-24b-instruct" },
+        { value: "mistralai/mistral-nemo", label: "mistralai/mistral-nemo" },
+        { value: "mistralai/mistral-large-latest", label: "mistralai/mistral-large-latest" },
+        { value: "mistralai/mistral-7b-instruct", label: "mistralai/mistral-7b-instruct" },
+        { value: "meta-llama/llama-3.3-70b-instruct", label: "meta-llama/llama-3.3-70b-instruct" },
+        { value: "meta-llama/llama-3.1-70b-instruct", label: "meta-llama/llama-3.1-70b-instruct" },
+        { value: "meta-llama/llama-3.1-8b-instruct:free", label: "meta-llama/llama-3.1-8b-instruct:free" },
+        { value: "meta-llama/llama-3.2-3b-instruct:free", label: "meta-llama/llama-3.2-3b-instruct:free" },
+        { value: "deepseek/deepseek-chat", label: "deepseek/deepseek-chat" },
+        { value: "deepseek/deepseek-r1", label: "deepseek/deepseek-r1" },
+        { value: "deepseek/deepseek-r1:free", label: "deepseek/deepseek-r1:free" },
+        { value: "nousresearch/hermes-3-llama-3.1-8b:free", label: "nousresearch/hermes-3-llama-3.1-8b:free" },
+        { value: "x-ai/grok-4.3", label: "x-ai/grok-4.3" },
+        { value: "x-ai/grok-4.20", label: "x-ai/grok-4.20" },
+        { value: "x-ai/grok-4.20-beta", label: "x-ai/grok-4.20-beta" },
+        { value: "cohere/command-r-plus-08-2024", label: "cohere/command-r-plus-08-2024" },
+        { value: "cohere/command-r-08-2024", label: "cohere/command-r-08-2024" },
+        { value: "cohere/command-a-03-2025", label: "cohere/command-a-03-2025" }
       ]
     };
     const maxTokensSugeridoPorProvedor = {
@@ -92,7 +127,8 @@
       Anthropic: 1024,
       Mistral: 1024,
       Cohere: 1024,
-      AzureOpenAI: 1024
+      AzureOpenAI: 1024,
+      OpenRouter: 1024
     };
     const temperaturaPadraoPorProvedor = {
       Gemini: 0.2,
@@ -101,7 +137,18 @@
       Anthropic: 0.2,
       Mistral: 0.2,
       Cohere: 0.2,
-      AzureOpenAI: 0.2
+      AzureOpenAI: 0.2,
+      OpenRouter: 0.2
+    };
+    const providerApiLinks = {
+      Gemini: "https://aistudio.google.com/",
+      Groq: "https://console.groq.com/keys",
+      OpenAI: "https://platform.openai.com/api-keys",
+      Anthropic: "https://console.anthropic.com/settings/keys",
+      Mistral: "https://console.mistral.ai/api-keys/",
+      Cohere: "https://dashboard.cohere.com/api-keys",
+      AzureOpenAI: "https://portal.azure.com/",
+      OpenRouter: "https://openrouter.ai/workspaces/default/keys"
     };
 
     let providerStatus = {};
@@ -112,6 +159,7 @@
     let historicoPaginaAtual = 1;
     const historicoItensPorPagina = 6;
     let analysisStatus = { text: "Pronto", className: "chip info" };
+    let openRouterModelosFiltrados = false;
 
     function syncDrawerState(open) {
       configDrawerEl.classList.toggle("open", open);
@@ -137,6 +185,8 @@
       toastEl.style.display = "block";
       toastEl.textContent = message;
       toastEl.style.background = isError ? "#b91c1c" : "#1f2937";
+      toastEl.style.color = "#f8fafc";
+      toastEl.style.borderColor = isError ? "#7f1d1d" : "#0f172a";
       if (toastTimeout) clearTimeout(toastTimeout);
       toastTimeout = setTimeout(() => toastEl.style.display = "none", 4500);
     }
@@ -276,6 +326,7 @@
         reuniao.dataReuniao,
         reuniao.tipoReuniao,
         reuniao.modoExecucao,
+        reuniao.modeloIA,
         ...(reuniao.topicosPrincipais || []),
         ...(reuniao.responsaveis || []),
         ...(reuniao.decisoes || []),
@@ -413,11 +464,11 @@
         iaChip.className = "chip info";
         iaChip.textContent = reuniao.modoExecucao || "IA não identificada";
 
-        const origemChip = document.createElement("span");
-        origemChip.className = reuniao.geradoPorIA ? "chip ok" : "chip bad";
-        origemChip.textContent = reuniao.geradoPorIA ? "Gerado por IA" : "Origem não identificada";
+        const modeloChip = document.createElement("span");
+        modeloChip.className = "chip info";
+        modeloChip.textContent = `Modelo: ${reuniao.modeloIA || "não identificado"}`;
 
-        meta.append(dataChip, tipoChip, iaChip, origemChip);
+        meta.append(dataChip, tipoChip, iaChip, modeloChip);
 
         const analysisDetails = document.createElement("details");
         const analysisSummary = document.createElement("summary");
@@ -550,6 +601,10 @@
         return "O modelo selecionado foi descontinuado pelo provedor. Escolha outro modelo e tente novamente.";
       }
 
+      if (lower.includes("deprecated") && lower.includes("grok")) {
+        return "O modelo Grok selecionado foi descontinuado no OpenRouter. Use x-ai/grok-4.3 ou x-ai/grok-4.20.";
+      }
+
       if (lower.includes("status 404") && lower.includes("modelo")) {
         return "O modelo selecionado não está disponível para sua conta/chave. Selecione outro modelo.";
       }
@@ -591,7 +646,7 @@
 
     function updateModeloOptionsForProvider() {
       const provider = toApiProvider(providerAnalysisEl.value);
-      const options = modelosPorProvedor[provider] || [{ value: "", label: "Padrão do provedor" }];
+      const options = modelosPorProvedor[provider] || modelosPorProvedor.OpenRouter || [{ value: "", label: "Padrão do provedor" }];
       const current = modeloIaEl.value;
 
       modeloIaEl.innerHTML = "";
@@ -604,6 +659,49 @@
 
       if (options.some(x => x.value === current)) {
         modeloIaEl.value = current;
+      }
+    }
+
+    async function filtrarModelosOpenRouterDisponiveis() {
+      if (openRouterModelosFiltrados) {
+        return;
+      }
+
+      const options = modelosPorProvedor.OpenRouter || [];
+      const modelos = options.map(item => item.value).filter(Boolean);
+      if (modelos.length === 0) {
+        return;
+      }
+
+      try {
+        const resp = await fetch("/api/ia/openrouter/modelos/disponibilidade", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ modelos })
+        });
+
+        if (!resp.ok) {
+          return;
+        }
+
+        const data = await resp.json();
+        const disponiveis = new Set((data.modelosDisponiveis || []).map(value => value.toString()));
+        if (disponiveis.size === 0) {
+          return;
+        }
+
+        const before = modelosPorProvedor.OpenRouter.length;
+        modelosPorProvedor.OpenRouter = modelosPorProvedor.OpenRouter.filter(item => !item.value || disponiveis.has(item.value));
+        openRouterModelosFiltrados = true;
+
+        if (before !== modelosPorProvedor.OpenRouter.length) {
+          if (toApiProvider(providerAnalysisEl.value) === "OpenRouter") {
+            updateModeloOptionsForProvider();
+          }
+          showToast("Modelos OpenRouter filtrados para sua conta.");
+        }
+      } catch {
+        // Falha no catálogo não deve bloquear a análise.
       }
     }
 
@@ -697,6 +795,29 @@
         modelo: modelo || null,
         temperatura: hasTemperatura ? temperatura : null,
         maxTokens: hasMaxTokens ? Math.trunc(maxTokens) : null
+      };
+    }
+
+    function getSavedAdvancedConfigForProvider(provider) {
+      const store = readDefaultsStore();
+      const saved = store[provider] || null;
+      if (!saved) {
+        return null;
+      }
+
+      const options = modelosPorProvedor[provider] || [];
+      const allowedModels = new Set(options.map(item => item.value).filter(Boolean));
+      const modeloSalvo = (saved.modelo || "").toString().trim();
+      const modeloValido = !modeloSalvo || allowedModels.has(modeloSalvo);
+
+      if (modeloValido) {
+        return saved;
+      }
+
+      return {
+        modelo: null,
+        temperatura: saved.temperatura ?? null,
+        maxTokens: saved.maxTokens ?? null
       };
     }
 
@@ -862,6 +983,8 @@
       y += 6;
       doc.text(`IA utilizada: ${analysis.modoExecucao || "Não informada"}`, 18, y);
       y += 6;
+      doc.text(`Modelo: ${analysis.modeloIA || "Não informado"}`, 18, y);
+      y += 6;
       doc.text(`Data da reunião: ${formatDataReuniao(analysis.dataReuniao)}`, 18, y);
       y += 6;
       doc.text(`Tipo: ${analysis.tipoReuniao || "Não informado"} | Confiança: ${formatConfianca(analysis.nivelConfianca)}`, 18, y);
@@ -883,6 +1006,13 @@
       const configured = providerStatus[provider] === true;
       providerStatusEl.textContent = configured ? "Configurado" : "Não configurado";
       providerStatusEl.className = configured ? "chip ok" : "chip bad";
+    }
+
+    function updateProviderApiLink() {
+      const provider = toApiProvider(providerConfigEl.value);
+      const url = providerApiLinks[provider] || providerApiLinks.OpenRouter;
+      providerApiLinkEl.href = url;
+      providerApiLinkEl.textContent = `Criar API Key (${provider || "OpenRouter"})`;
     }
 
     function renderSidebarProviders() {
@@ -932,6 +1062,8 @@
         providerConfigEl.value = lastProvider;
         providerAnalysisEl.value = lastProvider;
       }
+
+      updateProviderApiLink();
     }
 
     async function fetchStatus() {
@@ -1035,7 +1167,12 @@
       resumoEl.className = "value";
 
       try {
-        const configuracaoIA = readAdvancedConfig();
+        if (provedorIA === "OpenRouter") {
+          await filtrarModelosOpenRouterDisponiveis();
+        }
+
+        const configuracaoIAAtual = readAdvancedConfig();
+        const configuracaoIA = configuracaoIAAtual || getSavedAdvancedConfigForProvider(provedorIA);
         const payload = { transcricao, provedorIA };
         if (configuracaoIA) {
           payload.configuracaoIA = configuracaoIA;
@@ -1119,6 +1256,7 @@
       aplicarFiltrosHistorico();
     });
     providerConfigEl.addEventListener("change", updateProviderStatusChip);
+    providerConfigEl.addEventListener("change", updateProviderApiLink);
     providerConfigEl.addEventListener("change", () => saveLastProvider(toApiProvider(providerConfigEl.value)));
     toggleConfigBtn.addEventListener("click", toggleConfigDrawer);
     configBackdropEl.addEventListener("click", closeConfigDrawer);
@@ -1138,6 +1276,9 @@
       saveLastProvider(toApiProvider(providerAnalysisEl.value));
       applyDefaultsForCurrentProvider();
       hideGroqSuggestion();
+      if (toApiProvider(providerAnalysisEl.value) === "OpenRouter") {
+        filtrarModelosOpenRouterDisponiveis();
+      }
     });
     switchToGroqBtn.addEventListener("click", () => {
       const hasGroq = Array.from(providerAnalysisEl.options).some(x => x.value === "Groq");
@@ -1163,6 +1304,9 @@
       await fetchProviders();
       await fetchStatus();
       applyDefaultsForCurrentProvider();
+      if (toApiProvider(providerAnalysisEl.value) === "OpenRouter") {
+        await filtrarModelosOpenRouterDisponiveis();
+      }
       setAnalysisState("Pronto", "chip info");
     }
 

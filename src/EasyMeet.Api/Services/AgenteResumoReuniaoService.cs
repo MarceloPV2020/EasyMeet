@@ -25,6 +25,7 @@ public sealed class AgenteResumoReuniaoService(
         var prompt = await promptBuilder.BuildAsync(transcricao, cancellationToken);
         var rawContent = await provider.GerarConteudoAsync(prompt, apiKey, configuracaoIA, cancellationToken);
         var parsed = parser.ParseOrThrow(rawContent);
+        var modeloEfetivo = ResolveModeloEfetivo(provedorIA, configuracaoIA);
 
         return new ResumoReuniaoResponse
         {
@@ -38,7 +39,29 @@ public sealed class AgenteResumoReuniaoService(
             TipoReuniao = parsed.TipoReuniao,
             NivelConfianca = parsed.NivelConfianca,
             GeradoPorIA = true,
-            ModoExecucao = provedorIA.ToString()
+            ModoExecucao = provedorIA.ToString(),
+            ModeloIA = modeloEfetivo
+        };
+    }
+
+    private static string ResolveModeloEfetivo(ProvedorIA provedorIA, ConfiguracaoAnaliseIA? configuracaoIA)
+    {
+        if (!string.IsNullOrWhiteSpace(configuracaoIA?.Modelo))
+        {
+            return configuracaoIA.Modelo.Trim();
+        }
+
+        return provedorIA switch
+        {
+            ProvedorIA.Gemini => "gemini-2.5-flash",
+            ProvedorIA.Groq => "llama-3.1-8b-instant",
+            ProvedorIA.OpenAI => "gpt-4.1-mini",
+            ProvedorIA.Anthropic => "claude-3-7-sonnet-20250219",
+            ProvedorIA.Mistral => "mistral-small-latest",
+            ProvedorIA.Cohere => "command-a-03-2025",
+            ProvedorIA.AzureOpenAI => "deployment-configurado",
+            ProvedorIA.OpenRouter => "google/gemini-2.5-flash",
+            _ => "modelo-nao-identificado"
         };
     }
 }

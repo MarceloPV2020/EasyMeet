@@ -42,7 +42,8 @@ public sealed class ReunioesControllerTests
             TipoReuniao = "Status",
             NivelConfianca = 0.9,
             GeradoPorIA = true,
-            ModoExecucao = "Gemini"
+            ModoExecucao = "Gemini",
+            ModeloIA = "gemini-2.5-flash"
         };
 
         var controller = new ReunioesController(
@@ -85,7 +86,8 @@ public sealed class ReunioesControllerTests
             TipoReuniao = "Status",
             NivelConfianca = 0.82,
             GeradoPorIA = true,
-            ModoExecucao = "Gemini"
+            ModoExecucao = "Gemini",
+            ModeloIA = "gemini-2.5-flash"
         }), repository);
         var request = new ResumoReuniaoRequest
         {
@@ -111,6 +113,7 @@ public sealed class ReunioesControllerTests
         Assert.Equal(0.82m, reuniao.Confianca);
         Assert.True(reuniao.GeradoPorIA);
         Assert.Equal("Gemini", reuniao.ModoExecucao);
+        Assert.Equal("gemini-2.5-flash", reuniao.ModeloIA);
     }
 
     [Fact]
@@ -210,7 +213,8 @@ public sealed class ReunioesControllerTests
                 TipoReuniao = "Desconhecida",
                 NivelConfianca = 0.5,
                 GeradoPorIA = true,
-                ModoExecucao = provedorIA.ToString()
+                ModoExecucao = provedorIA.ToString(),
+                ModeloIA = "modelo-teste"
             });
         }
     }
@@ -253,7 +257,8 @@ public sealed class ReunioesControllerTests
                 TipoReuniao = reuniao.TipoReuniao,
                 Confianca = reuniao.Confianca,
                 GeradoPorIA = reuniao.GeradoPorIA,
-                ModoExecucao = reuniao.ModoExecucao
+                ModoExecucao = reuniao.ModoExecucao,
+                ModeloIA = reuniao.ModeloIA
             });
             return Task.FromResult(id);
         }

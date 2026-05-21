@@ -95,7 +95,8 @@ public sealed class ReunioesController(
                     ? Convert.ToDecimal(response.NivelConfianca)
                     : 0m,
                 GeradoPorIA = response.GeradoPorIA,
-                ModoExecucao = response.ModoExecucao
+                ModoExecucao = response.ModoExecucao,
+                ModeloIA = response.ModeloIA
             }, cancellationToken);
 
             return Ok(response);
