@@ -59,7 +59,6 @@ public sealed class AgenteResumoReuniaoService(
             ProvedorIA.Anthropic => "claude-3-7-sonnet-20250219",
             ProvedorIA.Mistral => "mistral-small-latest",
             ProvedorIA.Cohere => "command-a-03-2025",
-            ProvedorIA.AzureOpenAI => "deployment-configurado",
             ProvedorIA.OpenRouter => "google/gemini-2.5-flash",
             _ => "modelo-nao-identificado"
         };

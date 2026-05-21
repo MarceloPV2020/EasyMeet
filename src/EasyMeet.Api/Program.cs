@@ -35,7 +35,6 @@ builder.Services.Configure<OpenAISettings>(builder.Configuration.GetSection(Open
 builder.Services.Configure<AnthropicSettings>(builder.Configuration.GetSection(AnthropicSettings.SectionName));
 builder.Services.Configure<MistralSettings>(builder.Configuration.GetSection(MistralSettings.SectionName));
 builder.Services.Configure<CohereSettings>(builder.Configuration.GetSection(CohereSettings.SectionName));
-builder.Services.Configure<AzureOpenAISettings>(builder.Configuration.GetSection(AzureOpenAISettings.SectionName));
 builder.Services.Configure<OpenRouterSettings>(builder.Configuration.GetSection(OpenRouterSettings.SectionName));
 builder.Services.AddScoped<PromptResumoReuniaoBuilder>();
 builder.Services.AddScoped<MeetingAnalysisParser>();
@@ -86,12 +85,6 @@ builder.Services.AddHttpClient<CohereClientService>(client =>
     client.Timeout = TimeSpan.FromSeconds(30);
 });
 builder.Services.AddScoped<IGenerativeAIClient>(sp => sp.GetRequiredService<CohereClientService>());
-
-builder.Services.AddHttpClient<AzureOpenAIClientService>(client =>
-{
-    client.Timeout = TimeSpan.FromSeconds(30);
-});
-builder.Services.AddScoped<IGenerativeAIClient>(sp => sp.GetRequiredService<AzureOpenAIClientService>());
 
 builder.Services.AddHttpClient<OpenRouterClientService>(client =>
 {

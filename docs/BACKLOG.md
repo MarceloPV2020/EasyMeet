@@ -1,161 +1,131 @@
 # Backlog - EasyMeet
 
-Este backlog consolida o estado atual da aplicação, as user stories geradas com apoio de IA e as próximas melhorias recomendadas.
+Este backlog organiza o estado atual do EasyMeet e as próximas evoluções recomendadas para produto, IA, segurança e experiência do usuário.
+
+## MVP Concluído
+
+- API ASP.NET Core .NET 9.
+- Swagger funcional.
+- Interface web local.
+- Configuração segura de API keys.
+- Seleção dinâmica de provider de IA.
+- Análise real com LLMs.
+- Suporte a OpenRouter e providers diretos.
+- Histórico local em SQLite.
+- Visualização e filtros no histórico.
+- Exportação PDF.
+- Testes automatizados.
+- GitHub Actions.
 
 ## Funcionalidades Implementadas
-- Arquitetura multi-provedor em tempo de execução.
-- Provedores suportados: Gemini, Groq, OpenAI, Anthropic, Mistral, Cohere e AzureOpenAI.
-- Armazenamento seguro de API keys no Windows Credential Manager.
-- Tela de configuração de IA em menu lateral recolhível.
-- Seleção de provedor para análise de reunião.
-- Configurações avançadas por análise: modelo, temperatura e máximo de tokens.
-- Preferências padrão por provedor salvas localmente no navegador.
-- Último provedor utilizado sugerido automaticamente ao abrir a tela.
-- Mensagens amigáveis com detalhe técnico preservado.
-- Atalho visual para trocar para Groq quando a quota do Gemini for excedida.
-- Parser de resposta estruturada com suporte ao schema atual e compatibilidade com formatos legados.
 
-## User Stories
+### Configuração de IA
 
-### US01 - Configurar Provedor de IA com Segurança
-Como usuário,
-Quero cadastrar, testar e remover a API key de cada provedor de IA,
-Para utilizar a análise inteligente sem expor credenciais em arquivos ou logs.
+- Selecionar provider para análise.
+- Selecionar modelo, temperatura e máximo de tokens.
+- Salvar padrões avançados por provider.
+- Testar conexão com API key.
+- Remover API key configurada.
 
-Critérios de aceitação:
-- O usuário deve conseguir selecionar um provedor de IA.
-- O usuário deve conseguir salvar uma API key para o provedor selecionado.
-- O usuário deve conseguir testar a conexão antes de analisar uma reunião.
-- O usuário deve conseguir remover a chave salva.
-- A API key não deve ser exibida, registrada em log ou armazenada em arquivos do projeto.
-- O status do provedor deve indicar se a chave está configurada ou não configurada.
+### Análise de Reuniões
 
-Tarefas técnicas:
-- Implementar armazenamento via `WindowsCredentialApiKeyStore`.
-- Expor endpoints em `IAConfigController`.
-- Atualizar a UI de configuração em menu lateral.
-- Criar mensagens amigáveis para falhas de autenticação, chave expirada e quota.
-- Cobrir fluxo com testes unitários do `ApiKeyManagerService`.
+- Gerar resumo executivo.
+- Identificar tópicos principais.
+- Extrair ações com responsáveis e prazos quando disponíveis.
+- Identificar decisões tomadas.
+- Identificar pendências.
+- Classificar tipo de reunião.
+- Registrar nível de confiança.
+- Registrar provider e modelo usados.
 
-Prioridade: Alta
-Status: Implementado
+### Histórico e Exportação
 
-Cenário BDD:
-Dado que o usuário abriu a configuração das IAs,
-Quando ele selecionar um provedor, informar uma API key válida e clicar em salvar,
-Então a chave deve ser armazenada no Windows Credential Manager e o status deve ser exibido como configurado.
+- Persistir análises em SQLite.
+- Listar histórico.
+- Filtrar por texto, data e tipo de reunião.
+- Remover itens do histórico.
+- Exportar relatório em PDF.
 
-### US02 - Analisar Reunião com Provedor Selecionável
-Como usuário,
-Quero escolher o provedor de IA antes de analisar uma transcrição,
-Para comparar qualidade, custo e disponibilidade entre diferentes modelos.
+## User Stories Implementadas
 
-Critérios de aceitação:
-- O usuário deve conseguir selecionar o provedor antes da análise.
-- A análise deve usar somente a chave salva para o provedor selecionado.
-- O endpoint de análise não deve receber API key no payload.
-- A resposta deve exibir resumo, tópicos, ações, responsáveis, decisões, pendências, tipo de reunião e confiança.
-- Se não houver chave configurada, a análise deve ser bloqueada com mensagem clara.
-- A aplicação não deve usar fallback local para gerar uma análise válida.
+### US01 - Configurar Provider de IA
 
-Tarefas técnicas:
-- Incluir `provedorIA` em `ResumoReuniaoRequest`.
-- Resolver o cliente correto via `IAProviderFactory`.
-- Buscar a chave no `IApiKeyStore`.
-- Chamar `IGenerativeAIClient.GerarConteudoAsync`.
-- Parsear e normalizar a resposta com `MeetingAnalysisParser`.
-- Atualizar testes de `AgenteResumoReuniaoService` e `ReunioesController`.
+Como usuário, quero cadastrar e testar API keys por provider para usar modelos reais sem expor credenciais.
 
-Prioridade: Alta
-Status: Implementado
+### US02 - Analisar Reunião com IA
 
-Cenário BDD:
-Dado que o usuário possui uma chave configurada para Groq,
-Quando ele selecionar Groq, informar uma transcrição válida e clicar em analisar,
-Então o sistema deve chamar o provedor Groq e exibir a resposta estruturada em campos separados.
+Como usuário, quero colar uma transcrição e receber uma análise estruturada para acompanhar decisões e tarefas.
 
-### US03 - Ajustar Configurações Avançadas da IA
-Como usuário,
-Quero configurar modelo, temperatura e máximo de tokens por provedor,
-Para controlar previsibilidade, tamanho da resposta e custo da análise.
+### US03 - Escolher Modelo
 
-Critérios de aceitação:
-- O usuário deve visualizar modelos compatíveis com o provedor selecionado.
-- O usuário deve escolher a temperatura por uma lista de opções claras.
-- O usuário deve visualizar o valor sugerido para máximo de tokens.
-- O usuário deve salvar padrões por provedor no navegador.
-- Ao trocar o provedor, a tela deve carregar os padrões correspondentes.
-- A análise deve respeitar o modelo selecionado sem trocar automaticamente para outro modelo.
+Como usuário, quero selecionar provider/modelo, temperatura e tokens para controlar qualidade, custo e previsibilidade.
 
-Tarefas técnicas:
-- Adicionar `ConfiguracaoAnaliseIA`.
-- Atualizar `IGenerativeAIClient` para receber configuração por análise.
-- Aplicar limites seguros em temperatura e tokens nos providers.
-- Atualizar a UI de configurações avançadas.
-- Persistir defaults por provedor no `localStorage`.
-- Validar comportamento com testes unitários e execução manual.
+### US04 - Consultar Histórico
 
-Prioridade: Média
-Status: Implementado
+Como usuário, quero visualizar análises anteriores para recuperar decisões, ações e pendências.
 
-Cenário BDD:
-Dado que o usuário selecionou Gemini como provedor,
-Quando ele escolher o modelo `gemini-2.5-flash-lite`, temperatura `0.2` e salvar como padrão,
-Então esses valores devem ser reaplicados automaticamente quando Gemini for selecionado novamente.
+### US05 - Exportar PDF
 
-### US04 - Diagnosticar Erros de Provedor
-Como usuário,
-Quero receber mensagens claras quando a IA falhar,
-Para entender se devo revisar a chave, trocar provedor, reduzir tokens ou tentar novamente depois.
+Como usuário, quero exportar uma análise para PDF para compartilhar ou arquivar o resultado.
 
-Critérios de aceitação:
-- Erros técnicos devem ser convertidos em mensagens amigáveis.
-- O detalhe técnico original deve continuar disponível na interface.
-- Erros de quota, rate limit, chave expirada, modelo inválido e indisponibilidade devem ser identificáveis.
-- Quando a quota do Gemini for excedida, a UI deve sugerir troca para Groq.
+## Backlog Futuro
 
-Tarefas técnicas:
-- Implementar mapeamento de mensagens no frontend.
-- Retornar detalhe técnico no teste de conexão.
-- Preservar mensagens originais vindas dos provedores.
-- Adicionar teste para resposta detalhada no `ApiKeyManagerService`.
+### Inteligência Artificial
 
-Prioridade: Alta
-Status: Implementado
+- Comparação lado a lado entre providers.
+- Ranking de qualidade por tipo de reunião.
+- Métricas de custo por modelo.
+- Registro de tokens usados quando o provider retornar essa informação.
+- Sugestão de modelo conforme tamanho da transcrição.
+- Avaliação automática de aderência ao JSON.
 
-Cenário BDD:
-Dado que o provedor Gemini retornou erro de quota excedida,
-Quando o usuário tentar analisar uma reunião,
-Então a interface deve exibir uma mensagem amigável, preservar o detalhe técnico e oferecer a opção de trocar para Groq.
+### UX/UI
 
-## Itens Técnicos Priorizados
+- Tela detalhada para cada análise.
+- Edição manual do resultado antes da exportação.
+- Melhorar página de histórico para grandes volumes.
+- Adicionar ordenação avançada por data, confiança e provider.
+- Exibir indicadores de custo e latência por análise.
 
-### P1 - Diagnóstico estruturado de erros por provedor
-- Objetivo: retornar códigos internos para erros conhecidos (`quota_excedida`, `chave_expirada`, `modelo_invalido`, `rate_limit`, `timeout`).
-- Benefício: simplifica tratamento na UI e testes automatizados.
-- Status: Planejado
+### Integrações
 
-### P1 - Cobertura de testes ampliada
-- Objetivo: cobrir endpoints de configuração de IA, teste detalhado de conexão e política de execução estrita por modelo.
-- Benefício: reduz risco ao adicionar novos provedores.
-- Status: Em andamento
+- Upload de áudio.
+- Transcrição automática.
+- Importação de `.txt`, `.docx` e `.pdf`.
+- Exportação em DOCX e Markdown.
+- Envio de resumo por e-mail.
+- Integração futura com calendário.
 
-### P1 - Configuração assistida para AzureOpenAI
-- Objetivo: orientar o preenchimento de endpoint, deployment e API version.
-- Benefício: reduz erros operacionais comuns no Azure.
-- Status: Planejado
+### Segurança
 
-### P2 - Guia operacional por provedor
-- Objetivo: documentar pré-requisitos, modelos recomendados, erros comuns e ações corretivas.
-- Benefício: acelera implantação e suporte.
-- Status: Planejado
+- Autenticação local ou multiusuário.
+- Perfis e permissões.
+- Criptografia adicional do histórico.
+- Mascaramento opcional de dados sensíveis antes do envio ao LLM.
+- Política de retenção de histórico.
 
-### P2 - Observabilidade sem exposição de segredos
-- Objetivo: registrar metadados seguros das chamadas, como provedor, modelo, duração e status.
-- Benefício: facilita análise de falhas sem risco de vazamento de API keys.
-- Status: Planejado
+### Analytics
 
-### P3 - Testes de contrato por provedor
-- Objetivo: criar testes opt-in com chaves reais em ambiente controlado.
-- Benefício: valida compatibilidade com APIs externas sem comprometer a suíte local.
-- Status: Futuro
+- Dashboard de reuniões analisadas.
+- Tempo médio de resposta por provider.
+- Taxa de erro por modelo.
+- Custo estimado por análise.
+- Distribuição por tipo de reunião.
+
+### Colaboração
+
+- Comentários em análises.
+- Compartilhamento de relatórios.
+- Edição manual de ações e responsáveis.
+- Status de execução das ações.
+- Atribuição de responsáveis internos.
+
+## Priorização Sugerida
+
+- P1: transcrição automática de áudio.
+- P1: dashboard básico de histórico.
+- P1: métricas de provider/modelo.
+- P2: exportação DOCX/Markdown.
+- P2: filtros avançados por provider/modelo.
+- P2: login e perfis.
+- P3: colaboração e workflow de ações.
