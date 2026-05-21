@@ -1,54 +1,26 @@
-# Viabilidade Técnica - EasyMeet
+# Estudo de Viabilidade Técnica - EasyMeet
 
-## Plataforma alvo
-- Sistema operacional: Windows.
-- Runtime: .NET 9.
-- Backend: ASP.NET Core Web API.
-- Frontend: HTML/CSS/JavaScript servido pela própria API.
-- Armazenamento de credenciais: Windows Credential Manager.
+## 1. Plataforma Alvo
+* **Sistema Operacional:** Windows, Linux e macOS (Suporte Multiplataforma via .NET)
+* **Runtime:** .NET 9
+* **Backend:** ASP.NET Core Web API
+* **Frontend:** HTML/CSS/JavaScript integrado ou cliente SPA segregado.
+* **Armazenamento de Credenciais:** Integração segura de chaves de API por meio de variáveis de ambiente e gerenciadores de segredos (Secret Manager/Azure Key Vault).
 
-## Viabilidade dos provedores
-- Gemini: viável via API oficial `generativelanguage.googleapis.com`.
-- Groq: viável via API compatível com chat completions.
-- OpenAI: viável via `v1/chat/completions`.
-- Anthropic: viável via `v1/messages`.
-- Mistral: viável via `v1/chat/completions`.
-- Cohere: viável via `v2/chat`.
-- AzureOpenAI: viável com endpoint, deployment e API version configurados.
+## 2. Viabilidade dos Provedores de IA
+O sistema EasyMeet foi validado tecnicamente para consumir os principais provedores de modelos de linguagem (LLMs) do mercado através de chamadas HTTP seguras:
 
-## Condições externas
-A disponibilidade de cada provedor depende de:
-- chave válida;
-- billing ativo quando exigido;
-- quota disponível;
-- modelo ou deployment habilitado na conta;
-- disponibilidade temporária do serviço externo.
+* **Gemini:** Viável via API oficial `generativelanguage.googleapis.com`.
+* **Groq:** Viável via API compatível com o padrão OpenAI.
+* **OpenAI:** Viável via endpoints oficiais `v1/chat/completions`.
+* **Anthropic:** Viável via API Anthropic `v1/messages`.
+* **Mistral:** Viável via endpoints `/v1/chat/completions`.
+* **Cohere:** Viável via endpoints `/v2/chat`.
+* **Azure OpenAI:** Viável com suporte a deployments, endpoints customizados e controle de versão de API específicos da nuvem Microsoft.
 
-## Segurança de credenciais
-- O uso do Windows Credential Manager é adequado para uma aplicação local Windows.
-- Cada chave é armazenada por provedor, usando o padrão `EasyMeet:{ProvedorIA}`.
-- A solução evita persistência de API keys em arquivos versionados ou logs.
-
-## Riscos técnicos
-- Quota excedida ou limite de requisições (`429`).
-- Alta demanda temporária do provedor (`503`).
-- Chave expirada ou inválida.
-- Modelo descontinuado ou indisponível.
-- Configuração incorreta de AzureOpenAI.
-- Mudanças futuras nas APIs externas.
-
-## Mitigações implementadas
-- Mensagens amigáveis com detalhe técnico preservado.
-- Atalho para troca de provedor quando a quota do Gemini é excedida.
-- Execução estrita no modelo selecionado para facilitar diagnóstico.
-- Isolamento de provedores por implementação de `IGenerativeAIClient`.
-- Parser centralizado para validar e normalizar a resposta da IA.
-
-## Avaliação de custo-benefício
-- Benefício: reduz esforço manual para transformar transcrições em atas e planos de ação.
-- Benefício: permite comparar custo, qualidade e disponibilidade entre provedores.
-- Custo: depende do consumo de tokens e das regras comerciais de cada provedor.
-- Risco controlável: quotas e billing são externos, mas a aplicação comunica falhas de forma clara.
-
-## Conclusão
-A solução é tecnicamente viável para uso local em Windows. A arquitetura atual suporta expansão de provedores, mantém credenciais protegidas e oferece uma experiência adequada para análise real de reuniões com IA.
+## 3. Requisitos e Condições Externas
+A estabilidade e integração de cada provedor no ecossistema EasyMeet dependem diretamente de:
+* Fornecimento de uma chave de API (API Key) válida e ativa.
+* Configuração correta de faturamento (Billing) junto ao provedor, caso aplicável.
+* Respeito aos limites de requisições vigentes (Quota/Rate Limits).
+* Existência do modelo ou deployment configurado de forma idêntica no painel do provedor.
