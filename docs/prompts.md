@@ -790,7 +790,7 @@ Não quebrar nenhum endpoint existente.
 Não alterar contratos da API.
 Melhorar apenas UX/UI e organização visual.
 
-## 12. Revisão final da documentação
+## 15. Revisão final da documentação
 ### Prompt
 Revise completamente toda a documentação do projeto EasyMeet para deixá-la profissional, consistente, organizada e alinhada ao estado atual da aplicação.
 
@@ -1016,3 +1016,214 @@ Ao final:
 - revisar títulos;
 - revisar ortografia;
 - revisar estrutura dos documentos.
+
+
+
+## 16. Atualização dos GitHub Issues
+### Prompt
+Leia completamente o projeto EasyMeet, incluindo:
+- código-fonte;
+- documentação;
+- README;
+- docs/BACKLOG.md;
+- PRD;
+- UML;
+- ADR;
+- controllers;
+- services;
+- providers IA;
+- GitHub Actions;
+- testes automatizados;
+- interface web.
+
+Objetivo:
+Sincronizar automaticamente o backlog do projeto com GitHub Issues profissionais, criando rastreabilidade real do desenvolvimento.
+
+IMPORTANTE:
+- analisar o estado REAL atual do sistema;
+- detectar funcionalidades já implementadas;
+- detectar funcionalidades pendentes;
+- manter coerência entre código, backlog e issues.
+
+Regras gerais:
+
+1. Ler:
+- docs/BACKLOG.md
+
+2. Analisar:
+- funcionalidades implementadas;
+- funcionalidades futuras;
+- arquitetura atual;
+- providers IA existentes;
+- histórico;
+- PDF;
+- testes;
+- GitHub Actions;
+- OpenRouter;
+- Gemini;
+- Grok;
+- Mistral;
+- persistência;
+- interface;
+- Swagger.
+
+3. Para cada item do backlog:
+
+SE JÁ ESTIVER IMPLEMENTADO:
+- criar GitHub Issue;
+- adicionar descrição profissional;
+- adicionar labels;
+- adicionar contexto técnico;
+- fechar automaticamente a issue;
+- adicionar comentário:
+  "Funcionalidade já implementada no projeto."
+- atualizar BACKLOG.md para:
+  - [x]
+
+SE AINDA NÃO ESTIVER IMPLEMENTADO:
+- criar GitHub Issue aberta;
+- adicionar checklist técnico;
+- adicionar labels;
+- categorizar corretamente;
+- manter no BACKLOG.md:
+  - [ ]
+
+4. NÃO criar issues duplicadas.
+
+5. NÃO recriar issues já existentes.
+
+6. Categorizar issues com labels:
+- ia
+- backend
+- frontend
+- arquitetura
+- infraestrutura
+- ux-ui
+- testes
+- documentação
+- pdf
+- openrouter
+- providers
+- analytics
+- segurança
+
+7. Priorizar automaticamente:
+- alta
+- média
+- baixa
+
+8. Gerar descrições profissionais nas issues contendo:
+- objetivo;
+- contexto;
+- critérios técnicos;
+- impacto esperado;
+- observações arquiteturais.
+
+9. Para itens implementados:
+- tentar localizar evidências no código;
+- controllers;
+- services;
+- endpoints;
+- providers;
+- telas;
+- testes;
+- workflows.
+
+10. Para itens pendentes:
+- gerar checklist técnico detalhado.
+
+11. Criar script reutilizável:
+- scripts/sync-backlog-issues.ps1
+
+12. O script deve:
+- usar GitHub CLI (gh);
+- funcionar no Windows PowerShell;
+- ler docs/BACKLOG.md;
+- sincronizar backlog e issues;
+- evitar duplicidades;
+- criar labels automaticamente;
+- fechar issues automaticamente quando necessário;
+- comentar nas issues fechadas;
+- exibir logs claros no terminal.
+
+13. Usar comandos:
+- gh auth status
+- gh issue list
+- gh issue create
+- gh issue close
+- gh issue comment
+- gh label create
+
+14. Antes de executar:
+- validar autenticação GitHub CLI;
+- validar repositório atual.
+
+15. Atualizar docs/BACKLOG.md:
+- marcar funcionalidades implementadas com [x];
+- manter pendentes com [ ];
+- reorganizar backlog profissionalmente:
+  - MVP concluído
+  - funcionalidades implementadas
+  - melhorias futuras
+  - IA
+  - UX/UI
+  - infraestrutura
+  - analytics
+  - segurança
+  - colaboração
+  - providers
+  - exportação
+  - áudio/transcrição
+
+16. Considerar já implementado no EasyMeet:
+- múltiplos providers IA;
+- OpenRouter;
+- Gemini;
+- Grok;
+- Mistral;
+- análise inteligente;
+- resumo;
+- ações;
+- responsáveis;
+- decisões;
+- pendências;
+- classificação automática;
+- histórico persistido;
+- visualização do histórico;
+- exportação PDF;
+- Swagger;
+- interface web;
+- GitHub Actions;
+- testes automatizados;
+- PR template;
+- arquitetura organizada.
+
+17. Criar histórico profissional no GitHub:
+- issues fechadas representando funcionalidades já entregues;
+- issues abertas representando roadmap futuro.
+
+18. Melhorar profissionalismo do repositório:
+- rastreabilidade;
+- roadmap;
+- engenharia de software;
+- gestão do produto;
+- organização do backlog.
+
+19. Ao final:
+- executar o script;
+- criar/sincronizar issues;
+- mostrar resumo final no terminal contendo:
+  - issues criadas;
+  - issues fechadas;
+  - issues ignoradas;
+  - labels criadas;
+  - backlog atualizado.
+
+20. NÃO alterar:
+- docs/prompts.md
+
+21. NÃO remover providers existentes.
+
+22. Manter coerência com o estado real do sistema.
+
+23. Garantir aparência profissional de projeto SaaS corporativo baseado em IA.
